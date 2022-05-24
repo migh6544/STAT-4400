@@ -1,0 +1,442 @@
+---
+title: '[STAT 4400] HW-2 / Michael Ghattas'
+author: "Michael Ghattas"
+date: "1/31/2022"
+output:
+  word_document: default
+  html_document: default
+reference: https://github.com/IamGianluca
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1
+
+### (a)
+
+```{r}
+library(ggplot2)
+library(haven)
+data <- read_dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/heights.dta")
+head(data)
+
+
+lmod = lm(earn ~ ., data = data)
+summary(lmod)
+```
+
+##### We can transforn the data by using different methods of indexing and/or linear transformation.
+
+
+### (b)
+```{r}
+df = na.omit(data) # removing NA values
+
+lmod = lm(earn ~ height, data = df)
+summary(lmod)
+```
+
+```{r}
+df$male <- 2 - df$sex
+df$female <- (1 - df$sex) * -1
+
+lmodM = lm(earn ~ height + ed + male, data = df)
+summary(lmodM)
+
+lmodF = lm(earn ~ height + ed + female, data = df)
+summary(lmodF)
+
+anova(lmodM, lmodF)
+
+lmod = lm(earn ~ height + ed + male + female, data = df)
+summary(lmod)
+```
+The preferred models are lmodM & lmodF, as they capture the significance of each of the three predictors (height, education, and sex) in realation to each sex. Each model explains about 23% of the data, meaning between both models we are able to explain approximately 40% of the data.
+
+
+### (c)
+
+Based on the different models we tested in part (b), we can note from the lmodM & lmodF models that height increases the annual earnings by around \$319 per inch for either sex. Additionally, we can see that education plays an important role as it contributes to an increase of about \$2632 per academic year for either sex. From the ANOVA test we can hypothesize that there is little difference between the male and female models. Finally, from the lmod model and AIC we can confirm the significance of education and height on earnings, and further realize that being a male increases earnings by roughly $11719.
+
+
+
+# Question 2
+
+### (a)
+
+```{r}
+data <- read_dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/pollution.dta")
+head(data)
+df = na.omit(data) # removing NA values
+
+lmod = lm(mort ~ nox, data = df) #Do not believe this will be a good fit, as nitric oxides might not be a main contributor to death on its own!
+summary(lmod)
+plot(lmod)
+
+res = residuals(lmod)
+
+plot1 = ggplot(df, aes(nox, mort)) +
+  geom_point(shape = 21, color = "darkgoldenrod4", fill = "darkgoldenrod3", size = 2, 
+             alpha = 0.5,show.legend = FALSE) + 
+  theme_light() + xlab("Mortality per 100K") +   ylab("Nitric Oxides Pollution") + 
+  ggtitle("MORT ~ NOX Regression Model") +
+  geom_smooth(method = lm, color = "firebrick4", se = FALSE)
+
+plot2 = ggplot(lmod, aes(res, nox)) +
+  geom_point(shape = 21, color = "darkgoldenrod4", fill = "darkgoldenrod3", size = 2, 
+             alpha = 0.5,show.legend = FALSE) + 
+  theme_light() + xlab("Nitric Oxides Levels") +   ylab("Residuals") + 
+  ggtitle("Residuals Model") +
+  geom_smooth(method = lm, color = "firebrick4", se = FALSE)
+
+library(gridExtra)
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+The assumption of a linearity and constant variance for the residual error appears to be in question. Ideally there should be symmetry in the scattering above and below the line.
+
+
+### (b)
+```{r}
+lmod = lm(mort ~ ., data = df)
+summary(lmod)
+```
+```{r}
+df$mort <- (df$mort - mean(df$mort) / sd(df$mort))
+df$nonw <- (df$nonw - mean(df$nonw) / sd(df$nonw))
+df$educ <- (df$educ - mean(df$educ) / sd(df$educ))
+df$jant <- (df$jant - mean(df$jant) / sd(df$jant))
+df$nox <- (df$nox - mean(df$nox) / sd(df$nox))
+df$hc <- (df$hc - mean(df$hc) / sd(df$hc))
+df$jult <- (df$jult - mean(df$jult) / sd(df$jult))
+
+lmod = lm(mort ~ nonw + educ + jant + nox + hc + jult, data = df)
+summary(lmod)
+plot(lmod)
+
+res = residuals(lmod)
+
+plot1 = ggplot(df, aes(nonw + educ + jant + nox + hc + jult, mort)) +
+  geom_point(shape = 21, color = "darkgoldenrod4", fill = "darkgoldenrod3", size = 2, 
+             alpha = 0.5,show.legend = FALSE) + 
+  theme_light() + xlab("Mortality per 100K") +   ylab("Predictors") + 
+  ggtitle("MORT ~ Predictors Regression Model") +
+  geom_smooth(method = lm, color = "firebrick4", se = FALSE)
+
+plot2 = ggplot(lmod, aes(res, nonw + educ + jant + nox + hc + jult)) +
+  geom_point(shape = 21, color = "darkgoldenrod4", fill = "darkgoldenrod3", size = 2, 
+             alpha = 0.5,show.legend = FALSE) + 
+  theme_light() + xlab("Predictors") +   ylab("Residuals") + 
+  ggtitle("Residuals Model") +
+  geom_smooth(method = lm, color = "firebrick4", se = FALSE)
+
+library(gridExtra)
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+The assumption of a linearity and constant variance for the residual error appears to be better. There seems to be symmetry in the scattering above and below the line.
+
+
+### (c)
+
+The slope coefficients suggest a high positive correlation between the non-white population in urbanized areas and relative Nitric-Oxides pollution potential and mortality.  Additionally, there is a moderate negative correlation between the average January temperature, relative hydrocarbon pollution potential, and average July temperature and mortality. Finally, there is a strong correlation between the median school years completed by those over 22 and mortality. While the reasons behind most of the correlations requires more investigation, it is clear that higher education leads to lower mortality, most likely driven by better decision making and standard of living.
+
+
+### (d)
+
+```{r}
+df$mort <- (df$mort - mean(df$mort) / sd(df$mort))
+df$nox <- (df$nox - mean(df$nox) / sd(df$nox))
+df$hc <- (df$hc - mean(df$hc) / sd(df$hc))
+df$so2 <- (df$so2 - mean(df$so2) / sd(df$so2))
+
+lmod = lm(mort ~ nox + hc + so2, data = df)
+summary(lmod)
+plot(lmod)
+
+res = residuals(lmod)
+
+ggplot(df, aes(nox + hc + so2, mort)) +
+  geom_point(shape = 21, color="darkgoldenrod4", fill = "darkgoldenrod3", size = 2, 
+             alpha = 0.5,show.legend = FALSE) + 
+  theme_light() + xlab("Mortality per 100K") +   ylab("Pollutants") + 
+  ggtitle("MORT ~ Pollutants Regression Model") +
+  geom_smooth(method = lm, color = "firebrick4", se = FALSE)
+```
+
+We can note that Nitric-oxides pollutants have a moderate positive correlation on the rate of mortality, while Sulfur-dioxides seem to have a slight positive correlation. However, Hydrocarbon pollutants seem ti have a moderate negative correlation with the rate of mortality. The findings need further investigation with an understanding of the physical and chemical mechanisms in effect.
+
+### (e)
+
+```{r}
+df$mort <- (df$mort - mean(df$mort) / sd(df$mort))
+df$nox <- (df$nox - mean(df$nox) / sd(df$nox))
+df$hc <- (df$hc - mean(df$hc) / sd(df$hc))
+df$so2 <- (df$so2 - mean(df$so2) / sd(df$so2))
+
+# split dataset into training and test sets
+train <- df[1:(nrow(df) / 2), ]
+test <- df[((nrow(df) / 2) + 1):nrow(df), ]
+
+# fit linear model
+lmodT <- lm(log(mort) ~ nox + so2 + hc, data = train)
+summary(lmodT)
+
+## lm(formula = log(mort) ~ z.nox + z.so2 + z.hc, data = train)
+##             coef.est coef.se
+## (Intercept) -4.66     0.01  
+## z.nox        0.10     0.21  
+## z.so2        0.05     0.03  
+## z.hc        -0.13     0.20  
+## ---
+## n = 30, k = 4
+## residual sd = 0.05, R-Squared = 0.38
+
+# predict
+predictions <- predict(lmodT, test)
+cbind(predictions = exp(predictions), observed = test$mort)
+```
+We can not that this is not really cross-validation, but rather providing a sense of how the steps of cross-validation can be implemented.
+
+
+
+# Question 3
+
+### (a)
+
+```{r}
+require(arm)
+require(ggplot2)
+require(foreign)
+
+data <- read.csv("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/ProfEvaltnsBeautyPublic.csv")
+
+df = na.omit(data) # removing NA values
+df$profnumber <- as.factor(df$profnumber)
+df$female <- as.factor(df$female)
+
+dummies <- df[, 18:47]
+df$class <- factor(apply(dummies, FUN = function(r) r %*% 1:30, MARGIN = 1))
+df <- df[-c(18:47)]
+
+lmod1 <- lm(courseevaluation ~ female + profnumber + class, data = df)
+summary(lmod1)
+plot(lmod1)
+
+
+lmod2 <- lm(courseevaluation ~ female + profevaluation, data = df)
+summary(lmod2)
+plot(lmod2)
+
+
+df$profevaluation <- (df$profevaluation - mean(df$profevaluation)) / (2 * sd(df$profevaluation))
+
+lmod3 <- lm(courseevaluation ~ female + onecredit + (profevaluation * nonenglish), data = df)
+summary(lmod3)
+plot(lmod3)
+```
+
+
+### (b)
+
+based on the above three models, we can note that lmod3 provided the best fit, while maintaining normality and constant variance. Additionally, the predictors seems to provide the most significance.
+
+
+
+# Question 4
+
+y-intercept: \
+$logit(0.27) = -0.9946$ \
+
+Coefficient of earnings: \
+$logit(0.88) = -0.9946 + x_6$
+$1.9924301646902063 = -0.9946 + x_6$
+$x = \frac{1.9924301646902063 + 0.9946}{6} = 0.4978$
+
+Equation: \
+$Pr(y = 1) = logit^{-1}(-0.9946 + (0.4978 * x_i))$
+
+
+
+# Question 5
+
+### (a)
+
+```{r}
+require(arm)
+require(foreign)
+require(ggplot2)
+
+data <- read.csv("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/hvs02_sorted.csv")
+
+df = na.omit(data) # removing NA values
+df$race <- factor(df$race, labels = c("White (non-hispanic)", "Black (non-hispanic)", "Puerto Rican", "Other Hispanic", "Asian/Pacific Islander", "Native", "Mixed"))
+
+df$unitflr2 <- as.factor(df$unitflr2)
+df$numunits <- as.factor(df$numunits)
+df$stories <- as.factor(df$stories)
+df$extwin4_2 <- as.factor(df$extwin4_2)
+df$extflr5_2 <- as.factor(df$extflr5_2)
+df$borough <- factor(df$borough, labels = c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"))
+df$cd <- as.factor(df$cd)
+df$intcrack2 <- as.factor(df$intcrack2)
+df$inthole2 <- as.factor(df$inthole2)
+df$intleak2 <- as.factor(df$intleak2)
+df$intpeel_cat <- as.factor(df$intpeel_cat)
+df$help <- as.factor(df$help)
+df$old <- as.factor(df$old)
+df$dilap <- as.factor(df$dilap)
+df$regext <- as.factor(df$regext)
+df$poverty <- as.factor(df$poverty)
+df$povertyx2 <- as.factor(df$povertyx2)
+df$housing <- factor(df$housing, labels = c("public", "rent controlled", "owned"))
+df$board2 <- as.factor(df$board2)
+df$subsidy <- as.factor(df$subsidy)
+df$under6 <- as.factor(df$under6)
+
+df$hispanic_Mean = (df$hispanic_Mean * 10)
+df$black_Mean = (df$black_Mean * 10)
+
+lmod1 <- glm(rodent2 ~ race + hispanic_Mean + black_Mean, data = df)
+summary(lmod1)
+```
+
+Intercept: \
+An apartment where white (non-Hispanic) people live, situated in an area with average black and hispanic population, has probability 6.79% of having rodent infestation in the building
+
+Race: \
+We can notice the coefficients for all level are positive and statistically significant, with the only exception of Natives in particular, if anything else is hold at the average point, apartments where Hispanic, 29.75% more likely, and Puerto-Rican, 25% more likely, live have a higher chance to be in building infested by rodents.
+
+hispanic_Mean: \
+10% increase in Hispanic presence in the district is associated with a 4.75% increase in probability that the building is infested by rodents.
+
+black_Mean: \
+A flat occupied by whites, with average Hispanic presence in the district, is 2.75% more likely to be infested if the ratio of black people living in the district is 10% higher.
+
+
+### (b)
+
+```{r}
+lmod2 <- glm(rodent2 ~ race + hispanic_Mean + black_Mean + borough + old + housing + personrm + struct + foreign, data = df)
+summary(lmod2)
+```
+
+Intercept: \
+a public flat occupied by whites and owned by a non-foreign born individual, located in the Bronx borough in a district of average black and Hispanic presence, and an average number of persons per room, has a probability of 6.18% to be in a building infested by rodents.
+
+race: \
+A non white race has a higher probability to be associated with a building infested by rodents.
+
+Hispanic_Mean: \
+A 10% increase in Hispanic population in the district is associated with 3.25% more likelihood to live in a building infested by rodents.
+
+black_Mean: \
+A 10% increase in black population in the district is associated with a 1.5% higher probability to live in a building infested by rodents.
+
+borough: \
+Brooklyn and Manhattan have the highest probability to rats infestations, and Queens and Staten Island don't differ from Bronx.
+
+old: \
+Buildings built before 1947 have 9% more likely to have rodent infestations.
+
+housing: \
+Privately owned apartments are -6.50% more likely to have rodent infestations.
+
+personrm: \
+Higher the number of people per room leads to higher the chances of rodent infestations.
+
+struct: \
+Good or excellent building structure have less chance of having a rodent infestations.
+
+foreign: \
+Foreign-born owners tend to possess apartments located in buildings 5% more likely to be infested by rodents.
+
+
+
+# Question 6
+
+### (a)
+
+```{r}
+require(arm)
+require(ggplot2)
+require(foreign)
+
+data <- read.table("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/wells.dat")
+df = na.omit(data) # removing NA values
+head(df)
+
+df$logArsenic <- log(df$arsenic)
+lmod1 <- glm(switch ~ (dist * logArsenic), data = df)
+summary(lmod1)
+```
+
+Intercept: \
+a person with an average distance from a well with clean water and average logArsenic has a 62.01% probability to switch wells.
+
+dist: \
+a one meter increase in distance from a well with safe water has a decreasing the probability of switching wells by -0.25%.
+
+logArsenic: \
+A 10% increase in arsenic corresponds in a difference in the expected probability of switching well of 9.34%$.
+
+dist:log.arsenic: \
+Insignificant, exclude it from next model.
+
+
+### (b)
+
+```{r}
+ggplot(data = df, aes(x = dist, y = switch)) +
+  geom_jitter(position = position_jitter(height = .05)) + 
+  geom_smooth(method = "glm")
+```
+
+
+### (c)
+
+##### I
+
+```{r}
+b <- coef(lmod1)
+hi <- 100
+lo <- 0
+delta <- invlogit(b[1] + (b[2] * hi) + (b[3] * df$logArsenic + (b[4] * df$logArsenic * hi)) - invlogit(b[1] + (b[2] * lo) + (b[3] * df$logArsenic) +  (b[4] * df$logArsenic * lo)))
+mean(delta)
+```
+
+Households that are 100 meters from the nearest safe well are 45% more likely to switch.
+
+##### II
+```{r}
+b <- coef(lmod1)
+hi <- 200
+lo <- 100
+delta <- invlogit(b[1] + (b[2] * hi) + (b[3] * df$logArsenic) + (b[4] * df$logArsenic * hi)) - invlogit(b[1] + (b[2] * lo) + (b[3] * df$logArsenic) + (b[4] * df$logArsenic * lo))
+mean(delta)
+```
+
+5% less likely to switch.
+
+##### III
+```{r}
+b <- coef(lmod1)
+lo <- 0.5
+delta <- invlogit(b[1] + (b[2] * df$dist) + (b[3] * hi) + (b[4] * df$dist * hi)) - invlogit(b[1] + (b[2] * df$dist) + (b[3] * lo) + (b[4] * df$dist * lo))
+mean(delta)
+```
+
+35% more likely to switch.
+
+##### IIV
+```{r}
+b <- coef(lmod1)
+hi <- 2.0
+lo <- 1.0
+delta <- invlogit(b[1] + (b[2] * df$dist) + (b[3] * hi) + (b[4] * df$dist * hi)) - invlogit(b[1] + (b[2] * df$dist) + (b[3] * lo) + (b[4] * df$dist * lo))
+mean(delta)
+```
+
+4% more likely to switch.

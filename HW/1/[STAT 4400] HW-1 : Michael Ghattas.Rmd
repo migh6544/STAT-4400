@@ -1,0 +1,290 @@
+---
+title: '[STAT 4400] HW-1'
+author: "Michael Ghattas"
+date: "1/17/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Question-1
+
+$n = 3$
+
+$\bar{y} = \frac{1}{n}\sum_{i = 1}^{n}y_i = \frac{1 + 2 + 3}{3} = \frac{6}{3} = 2$ 
+
+$\bar{x} = \frac{1}{n}\sum_{i = 1}^{n}x_i = \frac{2 + 0 + 4}{3} = \frac{6}{3} = 2$
+
+
+### (a)
+
+$\hat{\beta_0} = \bar{y} - \hat{\beta_1}\bar{x}$
+
+$\hat{\beta_1} = \frac{\sum_{i = 1}^{n}(y_i - \bar{y})(x_i - \bar{x})}{\sum_{i = 1}^{n}(x_i - \bar{x})^2}$
+
+$\hat{\sigma^2} = \frac{1}{n - 2}\sum_{i = 1}^{n}(y_i - \hat{\beta_0} - \hat{\beta_1}x_i)^2$
+
+
+### (b)
+
+$\hat{\beta_1} = \frac{\sum_{i = 1}^{3}(y_i - 2)(x_i - 2)}{\sum_{i = 1}^{3}(x_i - 2)^2} = \frac{(-1 + 0 + 1)(0 - 2 + 2)}{(0)^2 + (-2)^2 + (2)^2} = \frac{(0)(0)}{4 + 4} = \frac{0}{8} = 0$
+
+$\hat{\beta_0} = 2 - (0)\bar{x} = 2 - 0 = 2$
+
+$\hat{\sigma^2} = \frac{1}{3 - 2}\sum_{i = 1}^{3}(y_i - 2 - (0)x_i)^2 = \frac{1}{1}\sum_{i = 1}^{3}(y_i - 2)^2 = 1[(-1)^2 + (0)^2 + (1)^2] = 1 + 0 + 1 = 2$
+
+
+### (c)
+
+$\hat{\epsilon_i} = y_i - \hat{y_i} = y_i - \hat{\beta_0} - \hat{\beta_1}x_i = y_i - 2 - 0 = y_i - 2$
+$SSE = \sum_{i = 1}^{3}\hat{\epsilon_i}^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2$
+
+$\hat{y_i} = \hat{\beta_0} - \hat{\beta_1}x_i + \hat{\epsilon_i} = 2 - 0 + \hat{\epsilon_i} = 2 + \hat{\epsilon_i}$
+$SSR = \sum_{i = 1}^{3}(\hat{y_i} - 2)^2 = ((2 + (1 - 2)) - 2)^2 + ((2 + (2 - 2)) - 2)^2 + ((2 + (3 - 2)) - 2)^2 = ((2 - 1) - 2)^2 + ((2 - 0) - 2)^2 + ((2 + 1) - 2)^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2$
+
+$SST = \sum_{i = 1}^{3}(y_i - 2)^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2$
+
+$R^2 = 1 - \frac{SSE}{SST} = \frac{2}{2} = 1$
+
+
+### (d)
+
+$H_0: \beta_1 = 0$
+
+$H_1: \beta_1 \neq 0$
+
+$\beta_1* = 0$
+
+$\hat{\beta_1}$ ~ N(0, $\tau$)
+
+$\hat{\tau} = \sqrt{\frac{\sigma^2}{\sum_{i = 1}^{3}(x_i - \bar{x})^2}} = \sqrt{\frac{2}{\sum_{i = 1}^{3}(x_i - 2)^2}} = \sqrt{\frac{2}{(1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2}} = \sqrt{\frac{2}{(-1)^2 + (0)^2 + (1)^2}} = \sqrt{\frac{2}{1 + 0 + 1}} = \sqrt{\frac{2}{2}} = \sqrt{1} = 1$
+
+$\hat{t} = \frac{\hat{\beta_1}}{\hat{\tau}}$
+
+$p[|t| \geq t*] = \alpha$
+
+```{r}
+y = c(1 , 2 , 3)
+x = c(2 , 0 , 4)
+alpha = 0.5
+n = length(x)
+
+beta.0.hat = 2
+beta.1.hat = 0
+sigma2.hat = 2
+std.t = dt(x , (n - 2))
+t.star = qt((1 - alpha / 2) , df = (n - 2))
+
+y.hat = beta.0.hat + (beta.1.hat * x)
+eps.hat = y - y.hat
+SSE = sum(eps.hat ** 2)
+sigma2.hat = SSE / (n - 2)
+tau.hat = sqrt(sigma2.hat / sum((x - mean(x)) ** 2))
+t.hat = beta.1.hat / tau.hat
+
+t.star
+t.hat
+
+print("(|t| < t*) Thus we fail to reject the the null-hypothesis")
+```
+
+
+### (e)
+
+```{r}
+lmod = lm(y ~ x)
+plot(x, y)
+abline(lmod, col = "red")
+```
+
+
+
+# Question-2
+
+$0 \leq x \leq 50$
+$\bar{x} = 35$
+$\sigma_x = 10$
+
+$y = a + bx$
+$\bar{y} = a + b\bar{x} = a + 35b$
+
+$\sigma_y = 15$
+$\bar{y} = 100$
+
+$\sigma_y = |b|\sigma_x = 10|b|$
+$15 = 10|b| \to |b| = \frac{15}{10} = 1.5 \to b = \pm1.5$
+
+$a + 35b = 100 \to a + 35(\pm1.5) = 100$
+$a + 35(-1.5) = 100 \to a - 52.5 = 100 \to a = 100 + 52.5 = 152.5$
+$a + 35(1.5) = 100 \to a + 52.5 = 100 \to a = 100 - 52.5 = 47.5$
+
+
+### (a)
+
+$y = 152.5 - 1.5x$
+
+
+### (b)
+
+$y = 47.5 + 1.5x$
+
+
+### (c)
+
+##### I would recommend the solution from part (a), as it has an increasing function that exhibits a positive correlation.
+
+
+
+# Question-3
+
+
+### (a)
+
+```{r}
+set.seed(123)
+
+var1 = rnorm(1000, mean = 0, sd = 1)
+var2 = rnorm(1000, mean = 0, sd = 1)
+
+lmod1 = lm(var1 ~ var2)
+summary(lmod1)
+
+print("Yes, based on the p-value generated we can conclude that the slope coefficient var2 is statistically significant.")
+```
+
+
+### (b)
+
+```{r}
+set.seed(321)
+
+z.scores <- rep (NA, 100)
+
+for (k in 1:100) 
+{
+  var1 <- rnorm (1000 ,0 ,1) 
+  var2 <- rnorm (1000 ,0 ,1)
+  fit <- lm (var2  ~ var1)
+  z.scores[k] <- coef(fit )[2] / summary(fit)$coef[2,"Std. Error"]
+}
+
+alpha = .05
+cutoffn = qnorm((1 - alpha) / 2, lower.tail=TRUE)
+sum(abs(z.scores) > cutoffn)
+
+for (k in 1:100) 
+{
+  result = sum(abs(z.scores) < 1.96)
+}
+
+result
+print("95 estimated slope coefficients are statistically significant at the α = .05 level of significance.")
+```
+
+
+
+# Question-4
+
+
+### (a)
+
+```{r}
+library(haven)
+data <- read_dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/HW/1/child.iq.dta")
+head(data)
+
+lmod = lm(ppvt ~ momage, data = data)
+summary(lmod)
+
+library(ggplot2)
+ggplot(data, aes(momage, ppvt)) +
+geom_point(shape = 21, color="steelblue4", fill="steelblue3", size = 3,
+alpha=0.5,show.legend = FALSE) +
+theme_light() + xlab("Age (Mother)") + ylab("Child (Test Scores)") +
+geom_smooth(method = lm, color="darkred", se=FALSE)
+
+print("Based on our summary and plots, it seems that the mother's age is a significant predictor, though not enough on its own to find a direct correlation. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers in their late 20's. Thus mothers should give birth in their late 20s.")
+```
+
+
+### (b)
+
+```{r}
+lmod = lm(ppvt ~ momage + educ_cat, data = data)
+summary(lmod)
+
+library(ggplot2)
+ggplot(data, aes(educ_cat, ppvt)) +
+geom_point(shape = 21, color="steelblue4", fill="steelblue3", size = 3,
+alpha=0.5,show.legend = FALSE) +
+theme_light() + xlab("Education (Mother)") + ylab("Child (Test Scores)") +
+geom_smooth(method = lm, color="darkred", se=FALSE)
+
+print("Based on our summary and plots, it seems that the mother's education is a strong and significant predictor. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers having completed a high-school education.")
+```
+
+
+### (c)
+
+```{r}
+data$mom.hs <- ifelse(data$educ_cat >= 2, 1, 0)
+
+lmod <- lm(ppvt ~ (mom.hs * momage), data = data)
+summary(lmod)
+
+
+spread <- ifelse(data$mom.hs == 1, "red", "black")
+plot(data$momage, data$ppvt, xlab = "Age (Mother)", ylab = "Child (Test Score)", col = spread, pch = 1)
+curve(cbind(1, 1, x, 1 * x) %*% coef(lmod), add = TRUE, col = "orange")                                   # Mother finished hs
+curve(cbind(1, 0, x, 0 * x) %*% coef(lmod), add = TRUE, col = "grey")                                     # Mother did not finish hs
+```
+
+
+
+### (d)
+
+```{r}
+lmod <- lm(ppvt ~ momage + educ_cat, data = data[1:200, ])
+summary(lmod)
+
+pmod <- predict(lmod, data[201:400, ])
+plot(pmod, data$ppvt[201:400], xlim = c(70, 110), xlab = "Predicted", 
+    ylab = "Actual", col = "blue")
+abline(a = 0, b = 1, col = "red")
+```
+
+
+
+# Question-5
+
+
+### (a)
+
+```{r}
+library(faraway)
+data(prostate)
+head(prostate)
+
+lmod = lm(log(lpsa) ~ log(lcavol) + ., data = prostate)
+summary(lmod)
+
+confint(lmod, 'log(lcavol)', level = 0.95)
+```
+
+
+### (b)
+```{r}
+lmod = lm(log(lpsa) ~ log(lcavol) + lcavol + lbph + svi, data = prostate)
+summary(lmod)
+
+confint(lmod, 'log(lcavol)', level = 0.95)
+```
+
+
+### (c)
+
+##### The model from part (a) has a slightly better fit, as the R^2 value is slightly higher, indicating a better fitted model.

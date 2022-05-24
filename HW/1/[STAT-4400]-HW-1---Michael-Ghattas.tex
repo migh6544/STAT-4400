@@ -1,0 +1,747 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={{[}STAT 4400{]} HW-1},
+  pdfauthor={Michael Ghattas},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{{[}STAT 4400{]} HW-1}
+\author{Michael Ghattas}
+\date{1/17/2022}
+
+\begin{document}
+\maketitle
+
+\hypertarget{question-1}{%
+\section{Question-1}\label{question-1}}
+
+\(n = 3\)
+
+\(\bar{y} = \frac{1}{n}\sum_{i = 1}^{n}y_i = \frac{1 + 2 + 3}{3} = \frac{6}{3} = 2\)
+
+\(\bar{x} = \frac{1}{n}\sum_{i = 1}^{n}x_i = \frac{2 + 0 + 4}{3} = \frac{6}{3} = 2\)
+
+\hypertarget{a}{%
+\subsubsection{(a)}\label{a}}
+
+\(\hat{\beta_0} = \bar{y} - \hat{\beta_1}\bar{x}\)
+
+\(\hat{\beta_1} = \frac{\sum_{i = 1}^{n}(y_i - \bar{y})(x_i - \bar{x})}{\sum_{i = 1}^{n}(x_i - \bar{x})^2}\)
+
+\(\hat{\sigma^2} = \frac{1}{n - 2}\sum_{i = 1}^{n}(y_i - \hat{\beta_0} - \hat{\beta_1}x_i)^2\)
+
+\hypertarget{b}{%
+\subsubsection{(b)}\label{b}}
+
+\(\hat{\beta_1} = \frac{\sum_{i = 1}^{3}(y_i - 2)(x_i - 2)}{\sum_{i = 1}^{3}(x_i - 2)^2} = \frac{(-1 + 0 + 1)(0 - 2 + 2)}{(0)^2 + (-2)^2 + (2)^2} = \frac{(0)(0)}{4 + 4} = \frac{0}{8} = 0\)
+
+\(\hat{\beta_0} = 2 - (0)\bar{x} = 2 - 0 = 2\)
+
+\(\hat{\sigma^2} = \frac{1}{3 - 2}\sum_{i = 1}^{3}(y_i - 2 - (0)x_i)^2 = \frac{1}{1}\sum_{i = 1}^{3}(y_i - 2)^2 = 1[(-1)^2 + (0)^2 + (1)^2] = 1 + 0 + 1 = 2\)
+
+\hypertarget{c}{%
+\subsubsection{(c)}\label{c}}
+
+\(\hat{\epsilon_i} = y_i - \hat{y_i} = y_i - \hat{\beta_0} - \hat{\beta_1}x_i = y_i - 2 - 0 = y_i - 2\)
+\(SSE = \sum_{i = 1}^{3}\hat{\epsilon_i}^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2\)
+
+\(\hat{y_i} = \hat{\beta_0} - \hat{\beta_1}x_i + \hat{\epsilon_i} = 2 - 0 + \hat{\epsilon_i} = 2 + \hat{\epsilon_i}\)
+\(SSR = \sum_{i = 1}^{3}(\hat{y_i} - 2)^2 = ((2 + (1 - 2)) - 2)^2 + ((2 + (2 - 2)) - 2)^2 + ((2 + (3 - 2)) - 2)^2 = ((2 - 1) - 2)^2 + ((2 - 0) - 2)^2 + ((2 + 1) - 2)^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2\)
+
+\(SST = \sum_{i = 1}^{3}(y_i - 2)^2 = (1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2 = (-1)^2 + (0)^2 + (1)^2 = 1 + 0 + 1 = 2\)
+
+\(R^2 = 1 - \frac{SSE}{SST} = \frac{2}{2} = 1\)
+
+\hypertarget{d}{%
+\subsubsection{(d)}\label{d}}
+
+\(H_0: \beta_1 = 0\)
+
+\(H_1: \beta_1 \neq 0\)
+
+\(\beta_1* = 0\)
+
+\(\hat{\beta_1}\) \textasciitilde{} N(0, \(\tau\))
+
+\(\hat{\tau} = \sqrt{\frac{\sigma^2}{\sum_{i = 1}^{3}(x_i - \bar{x})^2}} = \sqrt{\frac{2}{\sum_{i = 1}^{3}(x_i - 2)^2}} = \sqrt{\frac{2}{(1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2}} = \sqrt{\frac{2}{(-1)^2 + (0)^2 + (1)^2}} = \sqrt{\frac{2}{1 + 0 + 1}} = \sqrt{\frac{2}{2}} = \sqrt{1} = 1\)
+
+\(\hat{t} = \frac{\hat{\beta_1}}{\hat{\tau}}\)
+
+\(p[|t| \geq t*] = \alpha\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{y }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{ , }\DecValTok{2}\NormalTok{ , }\DecValTok{3}\NormalTok{)}
+\NormalTok{x }\OtherTok{=} \FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{ , }\DecValTok{0}\NormalTok{ , }\DecValTok{4}\NormalTok{)}
+\NormalTok{alpha }\OtherTok{=} \FloatTok{0.5}
+\NormalTok{n }\OtherTok{=} \FunctionTok{length}\NormalTok{(x)}
+
+\NormalTok{beta.}\FloatTok{0.}\NormalTok{hat }\OtherTok{=} \DecValTok{2}
+\NormalTok{beta.}\FloatTok{1.}\NormalTok{hat }\OtherTok{=} \DecValTok{0}
+\NormalTok{sigma2.hat }\OtherTok{=} \DecValTok{2}
+\NormalTok{std.t }\OtherTok{=} \FunctionTok{dt}\NormalTok{(x , (n }\SpecialCharTok{{-}} \DecValTok{2}\NormalTok{))}
+\NormalTok{t.star }\OtherTok{=} \FunctionTok{qt}\NormalTok{((}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ alpha }\SpecialCharTok{/} \DecValTok{2}\NormalTok{) , }\AttributeTok{df =}\NormalTok{ (n }\SpecialCharTok{{-}} \DecValTok{2}\NormalTok{))}
+
+\NormalTok{y.hat }\OtherTok{=}\NormalTok{ beta.}\FloatTok{0.}\NormalTok{hat }\SpecialCharTok{+}\NormalTok{ (beta.}\FloatTok{1.}\NormalTok{hat }\SpecialCharTok{*}\NormalTok{ x)}
+\NormalTok{eps.hat }\OtherTok{=}\NormalTok{ y }\SpecialCharTok{{-}}\NormalTok{ y.hat}
+\NormalTok{SSE }\OtherTok{=} \FunctionTok{sum}\NormalTok{(eps.hat }\SpecialCharTok{**} \DecValTok{2}\NormalTok{)}
+\NormalTok{sigma2.hat }\OtherTok{=}\NormalTok{ SSE }\SpecialCharTok{/}\NormalTok{ (n }\SpecialCharTok{{-}} \DecValTok{2}\NormalTok{)}
+\NormalTok{tau.hat }\OtherTok{=} \FunctionTok{sqrt}\NormalTok{(sigma2.hat }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{((x }\SpecialCharTok{{-}} \FunctionTok{mean}\NormalTok{(x)) }\SpecialCharTok{**} \DecValTok{2}\NormalTok{))}
+\NormalTok{t.hat }\OtherTok{=}\NormalTok{ beta.}\FloatTok{1.}\NormalTok{hat }\SpecialCharTok{/}\NormalTok{ tau.hat}
+
+\NormalTok{t.star}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{t.hat}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"(|t| \textless{} t*) Thus we fail to reject the the null{-}hypothesis"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "(|t| < t*) Thus we fail to reject the the null-hypothesis"
+\end{verbatim}
+
+\hypertarget{e}{%
+\subsubsection{(e)}\label{e}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{=} \FunctionTok{lm}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ x)}
+\FunctionTok{plot}\NormalTok{(x, y)}
+\FunctionTok{abline}\NormalTok{(lmod, }\AttributeTok{col =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{{[}STAT-4400{]}-HW-1---Michael-Ghattas_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\hypertarget{question-2}{%
+\section{Question-2}\label{question-2}}
+
+\(0 \leq x \leq 50\) \(\bar{x} = 35\) \(\sigma_x = 10\)
+
+\(y = a + bx\) \(\bar{y} = a + b\bar{x} = a + 35b\)
+
+\(\sigma_y = 15\) \(\bar{y} = 100\)
+
+\(\sigma_y = |b|\sigma_x = 10|b|\)
+\(15 = 10|b| \to |b| = \frac{15}{10} = 1.5 \to b = \pm1.5\)
+
+\(a + 35b = 100 \to a + 35(\pm1.5) = 100\)
+\(a + 35(-1.5) = 100 \to a - 52.5 = 100 \to a = 100 + 52.5 = 152.5\)
+\(a + 35(1.5) = 100 \to a + 52.5 = 100 \to a = 100 - 52.5 = 47.5\)
+
+\hypertarget{a-1}{%
+\subsubsection{(a)}\label{a-1}}
+
+\(y = 152.5 - 1.5x\)
+
+\hypertarget{b-1}{%
+\subsubsection{(b)}\label{b-1}}
+
+\(y = 47.5 + 1.5x\)
+
+\hypertarget{c-1}{%
+\subsubsection{(c)}\label{c-1}}
+
+\hypertarget{i-would-recommend-the-solution-from-part-a-as-it-has-an-incresing-function-that-exhibits-a-postive-corelation.}{%
+\subparagraph{I would recommend the solution from part (a), as it has an
+incresing function that exhibits a postive
+corelation.}\label{i-would-recommend-the-solution-from-part-a-as-it-has-an-incresing-function-that-exhibits-a-postive-corelation.}}
+
+\hypertarget{question-3}{%
+\section{Question-3}\label{question-3}}
+
+\hypertarget{a-2}{%
+\subsubsection{(a)}\label{a-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+\NormalTok{var1 }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1000}\NormalTok{, }\AttributeTok{mean =} \DecValTok{0}\NormalTok{, }\AttributeTok{sd =} \DecValTok{1}\NormalTok{)}
+\NormalTok{var2 }\OtherTok{=} \FunctionTok{rnorm}\NormalTok{(}\DecValTok{1000}\NormalTok{, }\AttributeTok{mean =} \DecValTok{0}\NormalTok{, }\AttributeTok{sd =} \DecValTok{1}\NormalTok{)}
+
+\NormalTok{lmod1 }\OtherTok{=} \FunctionTok{lm}\NormalTok{(var1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ var2)}
+\FunctionTok{summary}\NormalTok{(lmod1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = var1 ~ var2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.7168 -0.6290 -0.0060  0.6451  3.2383 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)   
+## (Intercept)  0.01252    0.03129   0.400  0.68909   
+## var2         0.08494    0.03097   2.742  0.00621 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.9885 on 998 degrees of freedom
+## Multiple R-squared:  0.007479,   Adjusted R-squared:  0.006484 
+## F-statistic:  7.52 on 1 and 998 DF,  p-value: 0.006211
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"Yes, based on the p{-}value generated we can conclude that the slope cofficient var2 is statistically significant."}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Yes, based on the p-value generated we can conclude that the slope cofficient var2 is statistically significant."
+\end{verbatim}
+
+\hypertarget{b-2}{%
+\subsubsection{(b)}\label{b-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{321}\NormalTok{)}
+
+\NormalTok{z.scores }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{ (}\ConstantTok{NA}\NormalTok{, }\DecValTok{100}\NormalTok{)}
+
+\ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{100}\NormalTok{) }
+\NormalTok{\{}
+\NormalTok{  var1 }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{ (}\DecValTok{1000}\NormalTok{ ,}\DecValTok{0}\NormalTok{ ,}\DecValTok{1}\NormalTok{) }
+\NormalTok{  var2 }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{ (}\DecValTok{1000}\NormalTok{ ,}\DecValTok{0}\NormalTok{ ,}\DecValTok{1}\NormalTok{)}
+\NormalTok{  fit }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{ (var2  }\SpecialCharTok{\textasciitilde{}}\NormalTok{ var1)}
+\NormalTok{  z.scores[k] }\OtherTok{\textless{}{-}} \FunctionTok{coef}\NormalTok{(fit )[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(fit)}\SpecialCharTok{$}\NormalTok{coef[}\DecValTok{2}\NormalTok{,}\StringTok{"Std. Error"}\NormalTok{]}
+\NormalTok{\}}
+
+\NormalTok{alpha }\OtherTok{=}\NormalTok{ .}\DecValTok{05}
+\NormalTok{cutoffn }\OtherTok{=} \FunctionTok{qnorm}\NormalTok{((}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ alpha) }\SpecialCharTok{/} \DecValTok{2}\NormalTok{, }\AttributeTok{lower.tail=}\ConstantTok{TRUE}\NormalTok{)}
+\FunctionTok{sum}\NormalTok{(}\FunctionTok{abs}\NormalTok{(z.scores) }\SpecialCharTok{\textgreater{}}\NormalTok{ cutoffn)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 100
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{100}\NormalTok{) }
+\NormalTok{\{}
+\NormalTok{  result }\OtherTok{=} \FunctionTok{sum}\NormalTok{(}\FunctionTok{abs}\NormalTok{(z.scores) }\SpecialCharTok{\textless{}} \FloatTok{1.96}\NormalTok{)}
+\NormalTok{\}}
+
+\NormalTok{result}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 95
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"95 estimated slope coefficients are statistically significant at the α = .05 level of significance."}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "95 estimated slope coefficients are statistically significant at the α = .05 level of significance."
+\end{verbatim}
+
+\hypertarget{question-4}{%
+\section{Question-4}\label{question-4}}
+
+\hypertarget{a-3}{%
+\subsubsection{(a)}\label{a-3}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(haven)}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read\_dta}\NormalTok{(}\StringTok{"/Users/Home/Documents/Michael\_Ghattas/School/CU\_Boulder/2022/Spring 2022/STAT {-} 4400/HW/1/child.iq.dta"}\NormalTok{)}
+\FunctionTok{head}\NormalTok{(data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 3
+##    ppvt educ_cat momage
+##   <dbl>    <dbl>  <dbl>
+## 1   120        2     21
+## 2    89        1     17
+## 3    78        2     19
+## 4    42        1     20
+## 5   115        4     26
+## 6    97        1     20
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{=} \FunctionTok{lm}\NormalTok{(ppvt }\SpecialCharTok{\textasciitilde{}}\NormalTok{ momage, }\AttributeTok{data =}\NormalTok{ data)}
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = ppvt ~ momage, data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -67.109 -11.798   2.971  14.860  55.210 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  67.7827     8.6880   7.802 5.42e-14 ***
+## momage        0.8403     0.3786   2.219    0.027 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 20.34 on 398 degrees of freedom
+## Multiple R-squared:  0.01223,    Adjusted R-squared:  0.009743 
+## F-statistic: 4.926 on 1 and 398 DF,  p-value: 0.02702
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\FunctionTok{ggplot}\NormalTok{(data, }\FunctionTok{aes}\NormalTok{(momage, ppvt)) }\SpecialCharTok{+}
+\FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{shape =} \DecValTok{21}\NormalTok{, }\AttributeTok{color=}\StringTok{"steelblue4"}\NormalTok{, }\AttributeTok{fill=}\StringTok{"steelblue3"}\NormalTok{, }\AttributeTok{size =} \DecValTok{3}\NormalTok{,}
+\AttributeTok{alpha=}\FloatTok{0.5}\NormalTok{,}\AttributeTok{show.legend =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{+}
+\FunctionTok{theme\_light}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{xlab}\NormalTok{(}\StringTok{"Age (Mother)"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{"Child (Test Scores)"}\NormalTok{) }\SpecialCharTok{+}
+\FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method =}\NormalTok{ lm, }\AttributeTok{color=}\StringTok{"darkred"}\NormalTok{, }\AttributeTok{se=}\ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `geom_smooth()` using formula 'y ~ x'
+\end{verbatim}
+
+\includegraphics{{[}STAT-4400{]}-HW-1---Michael-Ghattas_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"Based on our summary and plots, it seems that the mother\textquotesingle{}s age is a significant predictor, though not enough on its own to find a direct corelation. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers in their late 20\textquotesingle{}s. Thus mothers should give birth in their late 20s."}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Based on our summary and plots, it seems that the mother's age is a significant predictor, though not enough on its own to find a direct corelation. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers in their late 20's. Thus mothers should give birth in their late 20s."
+\end{verbatim}
+
+\hypertarget{b-3}{%
+\subsubsection{(b)}\label{b-3}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{=} \FunctionTok{lm}\NormalTok{(ppvt }\SpecialCharTok{\textasciitilde{}}\NormalTok{ momage }\SpecialCharTok{+}\NormalTok{ educ\_cat, }\AttributeTok{data =}\NormalTok{ data)}
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = ppvt ~ momage + educ_cat, data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -61.763 -13.130   2.495  14.620  55.610 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  69.1554     8.5706   8.069 8.51e-15 ***
+## momage        0.3433     0.3981   0.862 0.389003    
+## educ_cat      4.7114     1.3165   3.579 0.000388 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 20.05 on 397 degrees of freedom
+## Multiple R-squared:  0.04309,    Adjusted R-squared:  0.03827 
+## F-statistic: 8.939 on 2 and 397 DF,  p-value: 0.0001594
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\FunctionTok{ggplot}\NormalTok{(data, }\FunctionTok{aes}\NormalTok{(educ\_cat, ppvt)) }\SpecialCharTok{+}
+\FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{shape =} \DecValTok{21}\NormalTok{, }\AttributeTok{color=}\StringTok{"steelblue4"}\NormalTok{, }\AttributeTok{fill=}\StringTok{"steelblue3"}\NormalTok{, }\AttributeTok{size =} \DecValTok{3}\NormalTok{,}
+\AttributeTok{alpha=}\FloatTok{0.5}\NormalTok{,}\AttributeTok{show.legend =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{+}
+\FunctionTok{theme\_light}\NormalTok{() }\SpecialCharTok{+} \FunctionTok{xlab}\NormalTok{(}\StringTok{"Education (Mother)"}\NormalTok{) }\SpecialCharTok{+} \FunctionTok{ylab}\NormalTok{(}\StringTok{"Child (Test Scores)"}\NormalTok{) }\SpecialCharTok{+}
+\FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method =}\NormalTok{ lm, }\AttributeTok{color=}\StringTok{"darkred"}\NormalTok{, }\AttributeTok{se=}\ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `geom_smooth()` using formula 'y ~ x'
+\end{verbatim}
+
+\includegraphics{{[}STAT-4400{]}-HW-1---Michael-Ghattas_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\StringTok{"Based on our summary and plots, it seems that the mother\textquotesingle{}s education is a strong and significant predictor. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers having completed a highschool education."}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Based on our summary and plots, it seems that the mother's education is a strong and significant predictor. That being said, the plot clearly shows that the majority of the observations with a higher test score belong to the mothers having completed a highschool education."
+\end{verbatim}
+
+\hypertarget{c-2}{%
+\subsubsection{(c)}\label{c-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data}\SpecialCharTok{$}\NormalTok{mom.hs }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{educ\_cat }\SpecialCharTok{\textgreater{}=} \DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+
+\NormalTok{lmod }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(ppvt }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (mom.hs }\SpecialCharTok{*}\NormalTok{ momage), }\AttributeTok{data =}\NormalTok{ data)}
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = ppvt ~ (mom.hs * momage), data = data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -56.696 -12.407   2.022  14.804  54.343 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   105.2202    17.6454   5.963 5.49e-09 ***
+## mom.hs        -38.4088    20.2815  -1.894   0.0590 .  
+## momage         -1.2402     0.8113  -1.529   0.1271    
+## mom.hs:momage   2.2097     0.9181   2.407   0.0165 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 19.85 on 396 degrees of freedom
+## Multiple R-squared:  0.06417,    Adjusted R-squared:  0.05708 
+## F-statistic: 9.051 on 3 and 396 DF,  p-value: 8.276e-06
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{spread }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{mom.hs }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\StringTok{"red"}\NormalTok{, }\StringTok{"black"}\NormalTok{)}
+\FunctionTok{plot}\NormalTok{(data}\SpecialCharTok{$}\NormalTok{momage, data}\SpecialCharTok{$}\NormalTok{ppvt, }\AttributeTok{xlab =} \StringTok{"Age (Mother)"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Child (Test Score)"}\NormalTok{, }\AttributeTok{col =}\NormalTok{ spread, }\AttributeTok{pch =} \DecValTok{1}\NormalTok{)}
+\FunctionTok{curve}\NormalTok{(}\FunctionTok{cbind}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, x, }\DecValTok{1} \SpecialCharTok{*}\NormalTok{ x) }\SpecialCharTok{\%*\%} \FunctionTok{coef}\NormalTok{(lmod), }\AttributeTok{add =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{col =} \StringTok{"orange"}\NormalTok{)                                   }\CommentTok{\# Mother finished hs}
+\FunctionTok{curve}\NormalTok{(}\FunctionTok{cbind}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{, x, }\DecValTok{0} \SpecialCharTok{*}\NormalTok{ x) }\SpecialCharTok{\%*\%} \FunctionTok{coef}\NormalTok{(lmod), }\AttributeTok{add =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{col =} \StringTok{"grey"}\NormalTok{)                                     }\CommentTok{\# Mother did not finish hs}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{{[}STAT-4400{]}-HW-1---Michael-Ghattas_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\hypertarget{d-1}{%
+\subsubsection{(d)}\label{d-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(ppvt }\SpecialCharTok{\textasciitilde{}}\NormalTok{ momage }\SpecialCharTok{+}\NormalTok{ educ\_cat, }\AttributeTok{data =}\NormalTok{ data[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{200}\NormalTok{, ])}
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = ppvt ~ momage + educ_cat, data = data[1:200, ])
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -46.358 -12.967   2.866  14.435  58.428 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  63.6295    11.8202   5.383 2.07e-07 ***
+## momage        0.4473     0.5516   0.811  0.41836    
+## educ_cat      5.4434     1.8228   2.986  0.00318 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 19.58 on 197 degrees of freedom
+## Multiple R-squared:  0.06199,    Adjusted R-squared:  0.05246 
+## F-statistic: 6.509 on 2 and 197 DF,  p-value: 0.001831
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pmod }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(lmod, data[}\DecValTok{201}\SpecialCharTok{:}\DecValTok{400}\NormalTok{, ])}
+\FunctionTok{plot}\NormalTok{(pmod, data}\SpecialCharTok{$}\NormalTok{ppvt[}\DecValTok{201}\SpecialCharTok{:}\DecValTok{400}\NormalTok{], }\AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{70}\NormalTok{, }\DecValTok{110}\NormalTok{), }\AttributeTok{xlab =} \StringTok{"Predicted"}\NormalTok{, }
+    \AttributeTok{ylab =} \StringTok{"Actual"}\NormalTok{, }\AttributeTok{col =} \StringTok{"blue"}\NormalTok{)}
+\FunctionTok{abline}\NormalTok{(}\AttributeTok{a =} \DecValTok{0}\NormalTok{, }\AttributeTok{b =} \DecValTok{1}\NormalTok{, }\AttributeTok{col =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{{[}STAT-4400{]}-HW-1---Michael-Ghattas_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\hypertarget{question-5}{%
+\section{Question-5}\label{question-5}}
+
+\hypertarget{a-4}{%
+\subsubsection{(a)}\label{a-4}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(faraway)}
+\FunctionTok{data}\NormalTok{(prostate)}
+\FunctionTok{head}\NormalTok{(prostate)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       lcavol lweight age      lbph svi      lcp gleason pgg45     lpsa
+## 1 -0.5798185  2.7695  50 -1.386294   0 -1.38629       6     0 -0.43078
+## 2 -0.9942523  3.3196  58 -1.386294   0 -1.38629       6     0 -0.16252
+## 3 -0.5108256  2.6912  74 -1.386294   0 -1.38629       7    20 -0.16252
+## 4 -1.2039728  3.2828  58 -1.386294   0 -1.38629       6     0 -0.16252
+## 5  0.7514161  3.4324  62 -1.386294   0 -1.38629       6     0  0.37156
+## 6 -1.0498221  3.2288  50 -1.386294   0 -1.38629       6     0  0.76547
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{=} \FunctionTok{lm}\NormalTok{(}\FunctionTok{log}\NormalTok{(lpsa) }\SpecialCharTok{\textasciitilde{}} \FunctionTok{log}\NormalTok{(lcavol) }\SpecialCharTok{+}\NormalTok{ ., }\AttributeTok{data =}\NormalTok{ prostate)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in log(lpsa): NaNs produced
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in log(lcavol): NaNs produced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = log(lpsa) ~ log(lcavol) + ., data = prostate)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.42557 -0.12542  0.02419  0.19314  0.51973 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(>|t|)   
+## (Intercept) -0.228166   0.665962  -0.343  0.73286   
+## log(lcavol) -0.073779   0.082178  -0.898  0.37221   
+## lcavol       0.298653   0.093642   3.189  0.00209 **
+## lweight      0.132774   0.086027   1.543  0.12700   
+## age         -0.008582   0.005988  -1.433  0.15596   
+## lbph         0.068535   0.030029   2.282  0.02535 * 
+## svi          0.247254   0.116662   2.119  0.03741 * 
+## lcp         -0.049417   0.044109  -1.120  0.26619   
+## gleason      0.086846   0.075419   1.152  0.25323   
+## pgg45        0.001981   0.002088   0.948  0.34605   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3323 on 74 degrees of freedom
+##   (13 observations deleted due to missingness)
+## Multiple R-squared:  0.4948, Adjusted R-squared:  0.4334 
+## F-statistic: 8.053 on 9 and 74 DF,  p-value: 3.254e-08
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lmod, }\StringTok{\textquotesingle{}log(lcavol)\textquotesingle{}}\NormalTok{, }\AttributeTok{level =} \FloatTok{0.95}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                  2.5 %     97.5 %
+## log(lcavol) -0.2375227 0.08996445
+\end{verbatim}
+
+\hypertarget{b-4}{%
+\subsubsection{(b)}\label{b-4}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lmod }\OtherTok{=} \FunctionTok{lm}\NormalTok{(}\FunctionTok{log}\NormalTok{(lpsa) }\SpecialCharTok{\textasciitilde{}} \FunctionTok{log}\NormalTok{(lcavol) }\SpecialCharTok{+}\NormalTok{ lcavol }\SpecialCharTok{+}\NormalTok{ lbph }\SpecialCharTok{+}\NormalTok{ svi, }\AttributeTok{data =}\NormalTok{ prostate)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in log(lpsa): NaNs produced
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in log(lcavol): NaNs produced
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = log(lpsa) ~ log(lcavol) + lcavol + lbph + svi, data = prostate)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.48196 -0.12939  0.05611  0.22173  0.48638 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  0.35496    0.12566   2.825 0.005987 ** 
+## log(lcavol) -0.07497    0.08041  -0.932 0.354038    
+## lcavol       0.29829    0.08713   3.423 0.000983 ***
+## lbph         0.07834    0.02645   2.961 0.004043 ** 
+## svi          0.24564    0.10428   2.356 0.020976 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3384 on 79 degrees of freedom
+##   (13 observations deleted due to missingness)
+## Multiple R-squared:  0.4407, Adjusted R-squared:  0.4124 
+## F-statistic: 15.56 on 4 and 79 DF,  p-value: 1.98e-09
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lmod, }\StringTok{\textquotesingle{}log(lcavol)\textquotesingle{}}\NormalTok{, }\AttributeTok{level =} \FloatTok{0.95}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                  2.5 %     97.5 %
+## log(lcavol) -0.2350253 0.08509177
+\end{verbatim}
+
+\hypertarget{c-3}{%
+\subsubsection{(c)}\label{c-3}}
+
+\hypertarget{the-model-from-part-a-has-a-slightly-better-fit-as-the-r2-value-is-slightly-higher-indicating-a-better-fitted-model.}{%
+\subparagraph{The model from part (a) has a slightly better fit, as the
+R\^{}2 value is slightly higher, indicating a better fitted
+model.}\label{the-model-from-part-a-has-a-slightly-better-fit-as-the-r2-value-is-slightly-higher-indicating-a-better-fitted-model.}}
+
+\end{document}

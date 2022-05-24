@@ -1,0 +1,325 @@
+---
+title: '[STAT 4400]  HW-3'
+author: "Michael Ghattas"
+date: "2/15/2022"
+output:
+  word_document: default
+  html_document: default
+
+reference: https://github.com/IamGianluca
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+
+```{r}
+require(AER)
+require(arm)
+require(foreign)
+require(ggplot2)
+
+df <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/risky_behaviors.dta", convert.factors = TRUE)
+df$fupacts <- round(df$fupacts)
+df$couples <- factor(df$couples)
+df$women_alone <- factor(df$women_alone)
+
+summary(df)
+```
+
+
+### (a)
+
+```{r}
+poi.reg <- glm(fupacts ~ women_alone, family=poisson, data = df)
+summary(poi.reg)
+```
+
+The model is a poor fit, even with the woman_alone factor having a statistical significance.
+
+
+### (b)
+
+```{r}
+df$c.bupacts <- (df$bupacts - mean(df$bupacts)) / (2 * sd(df$bupacts))
+poi.reg.ext <- glm(fupacts ~ women_alone + sex + c.bupacts + couples + bs_hiv, family = poisson, data = df)
+summary(poi.reg.ext)
+
+par(mfrow = c(1,2))
+plot(predict(poi.reg.ext), residuals(poi.reg.ext), xlab = "Predicted", ylab = "Residuals")
+abline(a = 0, b = 0, lty = 3)
+plot(predict(poi.reg.ext), rstandard(poi.reg.ext), xlab = "Predicted", ylab = "Standardized Residuals")
+abline(a = 1.96, b = 0, lty = 3)
+abline(a = -1.96, b = 0, lty = 3)
+
+binnedplot(predict(poi.reg.ext), rstandard(poi.reg.ext))
+dispersiontest(poi.reg.ext, trafo = 1)
+
+yhat <- predict (poi.reg.ext, type = "response")
+z <- (df$fupacts-yhat) / sqrt(yhat)
+n = poi.reg.ext$df.null + 1
+k = poi.reg.ext$df.null + 1 - poi.reg.ext$df.residual
+cat("overdispersion ratio is ", sum(z^2) / (n-k), "\n")
+
+cat("p-value of overdispersion test is ", pchisq(sum(z^2), n-k), "\n")
+```
+
+The estimated overdispersion is extremely high at 28.65, with over-dispersion ratio at  30.00404, and a p-value of over-dispersion test at  1.
+
+
+### (c)
+
+```{r}
+df$c.bupacts <- (df$bupacts - mean(df$bupacts)) / (2 * sd(df$bupacts))
+poi.reg.ext <- glm(fupacts ~ women_alone + sex + c.bupacts + couples + bs_hiv, family = quasipoisson, data = df)
+display(poi.reg.ext)
+
+ggplot(data=df, aes(x = couples, y = bupacts)) + geom_boxplot() + ylim(0, 50)
+
+df$offset <- ifelse(df$bupacts == 0, 1, df$bupacts)
+poi.reg.off <- glm(fupacts ~ women_alone + sex + couples + bs_hiv, offset = log(offset), family = quasipoisson, data = df)
+display(poi.reg.off)
+```
+
+Singles tends to have unprotected sex more often than couples. We fit a Poisson model with the number of unprotected sex acts reported at the baseline as an offset. 
+
+###(d)
+
+Yes it should! Observations coming from the elements of couples is not i.i.d. THis yields an extremely high positive correlation between the answers of individuals that are a part of a couple.
+
+
+
+# Problem 2
+
+```{r}
+require(arm)
+require(foreign)
+require(MASS)
+
+df <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/nes5200_processed_voters_realideo.dta")
+
+df$partyid3 <- factor(df$partyid3, labels = c("democrats", "independents", "republicans", "apolitical"))
+df$gender <- factor(df$gender, labels = c("male", "female"))
+df$race <- factor(df$race, labels = c("white", "black", "asian", "native american", "hispanic", "other"))
+df$south <- factor(df$south)
+df$ideo <- factor(df$ideo, labels = c("liberal", "moderate", "conservative"))
+
+x = df$partyid3
+df <- df[!is.na(levels(x)[x]),]
+
+df <- subset(df, partyid3 != "apolitical")
+df$partyid3 <- factor(df$partyid3)
+```
+
+
+### (a)
+
+```{r}
+multi.log <- polr(partyid3 ~ ideo + race + age_10, Hess = TRUE, data = df)
+summary(multi.log)
+```
+
+
+### (b)
+
+```{r}
+confint(multi.log)
+```
+
+age_10: For a one unit increase in age we expect a -0.11 increase in the expected value of partyid3.
+ideo: moderates and especially conservatives are more likely to be republicans. In particular.
+race: whites, and asianes are more likely to identify themselves as republicans, and blacks towards the democrat party.
+
+
+### (c)
+
+```{r}
+residuals(multi.log)
+```
+
+
+
+# Problem 3
+
+```{r}
+require("arm")
+require("foreign")
+require("ggplot2")
+require("VGAM")
+require("gridExtra")
+
+nsw <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/NSW.dw.obs.dta")
+
+nsw$sample <- factor(nsw$sample, labels = c("NSW", "CPS", "PSID"))
+nsw$black <- factor(nsw$black)
+nsw$hisp <- factor(nsw$hisp)
+nsw$nodegree <- factor(nsw$nodegree)
+nsw$married <- factor(nsw$married)
+nsw$treat <- factor(nsw$treat)
+nsw$educ_cat4 <- factor(nsw$educ_cat4, labels = c("less than high school", "high school", "sm college", "college"))
+
+standardise <- function(X) {
+    cols <- ncol(X)
+    for (c in 1:cols) {
+        if (is.numeric(X[, c])) {
+            start <- ncol(X)
+            c.c <- (X[, c] - mean(X[, c], na.rm=TRUE)) / (2 * sd(X[, c], na.rm = TRUE))
+            X[start+1] <- c.c
+            colnames(X)[start+1] <- paste0("c.", colnames(X)[c])
+        }
+    }
+    return(X)
+}
+
+nsw <- standardise(nsw)
+summary(nsw)
+
+ggplot(data = nsw, aes(x = re78)) + geom_histogram(binwidth = (range(nsw$re78)[2] - range(nsw$re78)[1])/150)
+
+modex <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+}
+
+print(paste0("The mode is: ", sprintf("$%3.2f", modex(nsw$re78))))
+ggplot(nsw[nsw$re78 >= 25500 & nsw$re78 < 25700,], aes(x = re78)) + geom_histogram()
+
+nsw$outcome <- rep(NA, nrow(nsw))
+nsw$outcome <- ifelse(nsw$re78 >= 25564.669921875, 1, 0)
+nsw$outcome <- factor(nsw$outcome, labels = c("lt", "gte"))
+
+p1 <- ggplot(data=nsw, aes(x = outcome, y = age)) + geom_boxplot() + labs(title = "Outcome vs Age")
+p2 <- ggplot(data=nsw, aes(x= outcome, y = re75)) + geom_boxplot() + labs(title = "Outcome vs re75")
+grid.arrange(p1, p2, nrow = 1)
+
+table(nsw$outcome, nsw$black)
+table(nsw$outcome, nsw$hisp)
+table(nsw$outcome, nsw$educ)
+
+fit1 <- glm(outcome ~ c.age + c.educ + c.re75 + black + married, family = binomial(link = "logit"), data = nsw)
+display(fit1)
+
+predicted <- predict(fit1, nsw, type = "response")
+y <- ifelse(nsw$re78 >= 25564.669921875, 1, 0)
+
+error.rate <- mean((predicted > 0.5 & y == 0) | (predicted < .5 & y == 1))
+print(paste0("Error rate: ", sprintf("%.2f%%", 100*error.rate)))
+
+fit2.a <- vglm(re78 ~ c.age + c.educ + c.re75, tobit(Lower = 0, Upper = 25563), data = nsw, subset = re78 < 25564)
+summary(fit2.a)
+
+fit2.b <- vglm(re78 ~ c.age + c.educ + c.re75, tobit(Lower = 25564, Upper = Inf), data = nsw, subset = re78 >= 25564)
+summary(fit2.b)
+
+y.hat <- ifelse(predict(fit1, nsw) < 0.5, ifelse(predict(fit2.a, nsw) < 0, 0, predict(fit2.a, nsw)), predict(fit2.b, nsw))
+y <- nsw$re78
+print(paste0("RMSE: ", sprintf("%.2f", sqrt(mean((y - y.hat) ** 2)))))
+
+ggplot(data = data.frame(cbind(y = y, y.hat = y.hat))) +
+    geom_histogram(aes(x = y, fill = "y"), alpha = .35, binwidth = (range(y)[2] - range(y)[1])/150) +
+    geom_histogram(aes(x = y.hat, fill = "y.hat"), alpha = .35, binwidth = (range(y)[2] - range(y)[1])/150)
+
+y.hat <- ifelse(predict(fit1, nsw) < 0.5, ifelse(predict(fit2.a, nsw) < 0, 0, predict(fit2.a, nsw)), 25564.669921875) 
+y <- nsw$re78
+print(paste0("RMSE: ", sprintf("%.2f", sqrt(mean((y - y.hat) ** 2)))))
+
+ggplot(data = data.frame(cbind(y = y, y.hat = y.hat))) +
+    geom_histogram(aes(x = y, fill =" y"), alpha = .35, binwidth = (range(y)[2] - range(y)[1])/150) +
+    geom_histogram(aes(x = y.hat, fill = "y.hat"), alpha = .35, binwidth = (range(y)[2] - range(y)[1])/150)
+```
+
+fit2.a: Underestimate the number of observations where earning in 1978 are zero.
+fit2.b: Shifts the distribution towards values above $25,564.66.
+Replaced the prediction of this model with the hard-coded value $25564.67, though further adjustments are needed to improve the fit of the model.
+
+
+
+# Problem 4
+
+
+### (a)
+
+```{r}
+df <- read.csv("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/oscars.csv")
+mcl <- polr(factor(Ch) ~ Nom + PrW + Gd + Gdr + DGA, Hess = TRUE, data = df)
+summary(mcl)
+```
+
+
+### (b)
+
+```{r}
+Ch = as.numeric(df$Ch)
+Nom = as.numeric(df$Nom)
+PrW = as.numeric(df$PrW)
+Gd = as.numeric(df$Gd)
+Gdr = as.numeric(df$Gdr)
+DGA = as.numeric(df$DGA)
+
+data = as.matrix(c(Ch, Nom, PrW, Gd, Gdr, DGA))
+mcl <- polr(factor(Ch) ~ Nom + PrW + Gd + Gdr + DGA, Hess = TRUE, data = data)
+# plot(Ch, mcl) Error!
+# hist(Ch, mcl) Error!
+```
+##### Not sure how to resolve this issue!
+
+### (c)
+
+```{r}
+# hist(residuals(mcl)) Error!
+# plot(residuals(mcl)) Error!
+```
+##### Not sure how to resolve this issue!
+
+
+# Problem 5
+
+```{r}
+require(foreign)
+require(nnet)
+require(ggplot2)
+require(reshape2)
+
+ml <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/hsbdemo.dta")
+with(ml, table(ses, prog))
+with(ml, do.call(rbind, tapply(write, prog, function(x) c(M = mean(x), SD = sd(x)))))
+```
+
+### (a)
+
+```{r}
+ml$prog2 <- relevel(ml$prog, ref = "academic")
+test <- multinom(prog2 ~ ses + write, data = ml)
+summary(test)
+
+exp(coef(test))
+head(pp <- fitted(test))
+```
+One-unit increase in the variable write is associated with the decrease in the log odds of being in general program vs. academic program in the amount of .058.
+One-unit increase in the variable write is associated with the decrease in the log odds of being in vocation program vs. academic program. in the amount of .1136.
+Odds of being in general program vs. in academic program will decrease by 1.163.
+Odds of being in general program vs. in academic program will decrease by 0.533, although this coefficient is not significant.
+Odds of being in vocation program vs. in academic program will decrease by 0.983.
+Odds of being in vocation program vs. in academic program will increase by 0.291 although this coefficient is not significant.
+
+
+### (b)
+
+```{r}
+dses <- data.frame(ses = c("low", "middle", "high"), write = mean(ml$write))
+predict(test, newdata = dses, "probs")
+
+dwrite <- data.frame(ses = rep(c("low", "middle", "high"), each = 41), write = rep(c(30:70), 3))
+pp.write <- cbind(dwrite, predict(test, newdata = dwrite, type = "probs", se = TRUE))
+by(pp.write[, 3:5], pp.write$ses, colMeans)
+```
+
+
+### (c)
+
+```{r}
+lpp <- melt(pp.write, id.vars = c("ses", "write"), value.name = "probability")
+ggplot(lpp, aes(x = write, y = probability, colour = ses)) + geom_line() + facet_grid(variable ~ ., scales = "free")
+```

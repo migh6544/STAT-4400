@@ -1,0 +1,409 @@
+---
+title: '[STAT 4400] Exam-2'
+author: "Michael Ghattas"
+date: "4/25/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+
+```{r, message=FALSE, warning=FALSE, fig.width=6,fig.height=3.8}  
+library (foreign)
+library(arm)
+library(cdlTools)
+require(ggplot2)
+require(GGally)
+require(reshape2)
+require(lme4)
+require(compiler)
+require(parallel)
+require(boot)
+require(lattice)
+library(gridExtra)
+library(grid)
+library(dplyr)
+
+
+frisk = read.table(file = "/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/BA-BS/2022/Spring 2022/STAT - 4400/Data/frisk_with_noise.dat.txt", header=TRUE, skip = 6)
+head(frisk)
+dim(frisk)   # 900 x 6
+
+names(frisk)[3] <- "arrests"
+attach(frisk)
+```
+
+### (a)
+
+```{r, message=FALSE, warning=FALSE, fig.width=6,fig.height=3.8}  
+n.precinct <- max (precinct)
+n.eth <- max (eth)
+n.crime <- max(crime)
+dcjs <- log(arrests*15/12)
+
+##  first let's aggregate
+friskagg <- aggregate(cbind(stops, arrests) ~ precinct + eth, data=frisk, sum)
+
+## These give me the percentages I want
+fr2 <- friskagg  %>%
+  group_by(precinct, eth) %>%
+  summarise(n = sum(stops)) %>%
+  mutate(percentage = n / sum(n))
+
+table2 = aggregate(fr2$percentage, list(fr2$eth) ,FUN = mean)
+colnames(table2) <- c("eth","percbyprec")
+
+head(fr2)
+dim(fr2)  #225 x 4
+
+##  Now I want to classify the precincts
+
+
+precinct.category.vec = ifelse(fr2$eth==1 & fr2$percentage <.1, 1,
+       ifelse(fr2$eth==1 & fr2$percentage < .4, 2,
+              ifelse(fr2$eth==1 & fr2$percentage <= 1, 3,NA)))    
+fr3 = as.data.frame(na.omit(cbind(fr2$precinct,precinct.category.vec)))
+
+# length 900, or 12 of each precinct
+fr12 = cbind(frisk, dcjs,  rep(as.vector(fr3[,2]), each=12) )
+colnames(fr12)[8] = "precinct.category"
+head(fr12)
+
+##  USE THIS as model 15.1log(arrests) is an offset
+M1 <- as.list (rep (NA, 12))
+index <- 0
+for (j in 1:3){
+  for (k in 1:4){
+    index <- index + 1
+    ok <- fr12$precinct.category==j & fr12$crime==k & fr12$arrests > 0
+    M1[[index]] <- glmer (stops ~ 1 + (1 | eth) + (1|precinct) , 
+        offset = log(arrests),
+        family=poisson(link=log), data=fr12, subset=ok)
+  }}
+
+
+
+allbeta = rep(0,12)
+alltheta = matrix(rep(0,24), nrow= 12, ncol = 2)
+alleth = matrix(rep(0,36), nrow= 12, ncol = 3)
+for(i in 1:12){
+  allbeta[i] = M1[[i]]@beta
+  alltheta[i,] = M1[[i]]@theta
+  alleth[i,] = as.data.frame(coef(M1[[i]])$eth)[,1]
+}
+
+##  USE THIS as model 15.5 # log(arrests) is a predictor not the dispersion factor...
+M2 <- as.list (rep (NA, 12))
+index <- 0
+for (j in 1:3){
+  for (k in 1:4){
+    index <- index + 1
+    ok <- fr12$precinct.category==j & fr12$crime==k & fr12$arrests > 0
+    M2[[index]] <- glmer (stops ~ 1 + log(arrests) + (1 | eth) + (1|precinct) , 
+    family=poisson(link=log), data=fr12, subset=ok)
+  }}
+
+allbeta2 = matrix(rep(0,24), nrow= 12, ncol = 2)
+alltheta2 = matrix(rep(0,24), nrow= 12, ncol = 2)
+alleth2 = matrix(rep(0,36), nrow= 12, ncol = 3)
+#allu = matrix(rep(0,84), nrow= 12, ncol = 7)
+for(i in 1:12){
+  allbeta2[i,] = M2[[i]]@beta
+  alltheta2[i,] = M2[[i]]@theta
+  alleth2[i,] = as.data.frame(coef(M2[[i]])$eth)[,1]
+}
+
+theta <- cbind(alltheta,alltheta2)
+beta <- cbind(allbeta,allbeta2)
+eths <- cbind(alleth,alleth2)
+
+theta
+beta
+eths
+
+M <- cbind(M1, M2)
+M
+``` 
+
+```{r}
+library(sjPlot) #for plotting lmer and glmer mods
+help(sjPlot)
+tab_model(M1, show.re.var= TRUE, dv.labels= "OVERDISPERSED POISSON REGRESSION OF POLICE STOPS")
+tab_model(M2, show.re.var= TRUE, dv.labels= "OVERDISPERSED POISSON REGRESSION OF POLICE STOPS")
+```
+### (b)
+
+The advantage of using the level of past arrests as an offset rather than a linear predictor is the reduction of bias in terms of our model and arrests. Since past arrests are taken into consideration as an offset for the model instead of a predictor of outcome.
+
+# Problem 2
+
+```{r, message=FALSE, warning=FALSE, fig.width=4,fig.height=3.8}  
+library(arm)
+library(ggplot2)
+library(RColorBrewer)
+library(reshape)
+library(wesanderson)
+library(gridExtra)
+library(grid)
+hiv.dataf <- read.csv ("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/BA-BS/2022/Spring 2022/STAT - 4400/Data/allvar.csv")
+head(hiv.dataf)
+dim(hiv.dataf)  # 1254 x 9
+table(hiv.dataf$treatmnt)
+summary(hiv.dataf$treatmnt)
+```
+
+### (a)
+
+```{r}
+attach(hiv.dataf)
+ok <- treatmnt==1 & !is.na(CD4PCT) & (baseage>1 & baseage<5)& !is.na(baseage) 
+table(ok)  # 369 meet the criteria  
+hiv.data = (hiv.dataf[ok,])
+head(hiv.data)
+dim(hiv.data)  # 369 x 9 
+attach(hiv.data)
+
+p1 = ggplot(hiv.data, aes(x=CD4PCT))+
+  geom_histogram(color="cadetblue4", fill="cadetblue3")
+
+p2 = ggplot(hiv.data, aes(x=log(CD4PCT)))+
+  geom_histogram(color="cadetblue4", fill="cadetblue3")
+
+p3 = ggplot(hiv.data, aes(x=sqrt(CD4PCT)))+
+  geom_histogram(color="cadetblue4", fill="cadetblue3")
+
+grid.arrange(p1,p2,p3, ncol=3)
+
+## Redefining variables
+y <- sqrt (CD4PCT)             # we are using the square root of the percentage
+age.baseline <- baseage        # kid's age (yrs) at the beginning of the study
+age.measurement <- visage      # kids age (yrs) at the time of measurement
+treatment <- treatmnt
+time <- visage - baseage
+
+length(unique (hiv.data$newpid))   # there are 83 patients in the dataset of length 369
+
+## Set up new patient id numbers from 1 to J
+unique.pid <- unique (newpid)
+n <- length (y)
+J <- length (unique.pid)
+person <- rep (NA, n)
+for (j in 1:J){
+person[newpid==unique.pid[j]] <- j
+}
+
+cols <- rep(brewer.pal(8,'Greens'),20)
+for (j in 1:J){
+if(j==1){
+plot(time[newpid==unique.pid[j]], y[newpid==unique.pid[j]], xlab="time (years)", ylab="sqrt (CD4%)", 
+     main="observed data", cex = .1, ylim=c(0,8))
+}
+points(time[newpid==unique.pid[j]], y[newpid==unique.pid[j]], col = cols[j], type="l", ylim=c(0,8))
+}
+
+M1 <- lmer (y ~ time + (1 + time | person))
+display (M1)
+
+coef.1 <- matrix(0, J, 1)
+coef.2 <- matrix(0, J, 1)
+coef.1 <- coef(M1)$person[1]
+coef.2 <- coef(M1)$person[2]
+t = time[newpid==unique.pid[1]]
+for (j in 1:J){
+    if(j==1){
+    plot(t , y=coef.1[j,1] + coef.2[j,1]*t, type="l", xlab="time (years)", ylab="sqrt (CD4%)", 
+              main="estimated trend lines", xlim=c(0,2), ylim=c(0,8))
+    }
+  curve(coef.1[j,1] + coef.2[j,1]*x,col=cols[j], add=T)
+}
+
+CD4.fake <- function(J, K){
+  time <- rep (seq(0,1,length=K), J)  # K measurements during the year
+  person <- rep (1:J, each=K)         # person ID's
+  treatment <- sample (rep(0:1, J/2))
+  treatment1 <- treatment[person] 
+#                                     # hyperparameters
+  mu.a.true <- 4.8                    # more generally, these could
+  g.0.true <- -.5                     # be specified as additional
+  g.1.true <- .5                      # arguments to the function
+  sigma.y.true <- .7
+  sigma.a.true <- 1.3
+  sigma.b.true <- .7
+#                                     # personal-level parameters
+  a.true <- rnorm (J, mu.a.true, sigma.a.true)
+  b.true <- rnorm (J, g.0.true + g.1.true*treatment, sigma.b.true)
+#                                     # data
+  y <- rnorm (J*K, a.true[person] + b.true[person]*time, sigma.y.true)
+  return (data.frame (y, time, person, treatment1))
+}
+  
+fake.83.7 = CD4.fake (83,7)
+head(fake.83.7)
+dim(fake.83.7)   # 581 x 4    83*7 = 581
+
+unique.pidf <- unique (fake.83.7$person)
+nf <- length (y)
+Jf <- length (unique.pidf)
+personf <- rep (NA, n)
+for (j in 1:Jf){
+  personf[fake.83.7$person==unique.pidf[j]] <- j
+}
+
+## Fit the model
+M1f <- lmer (y ~ time + (1 + time | person), data=fake.83.7)
+display (M1f)
+
+## Figure 20.5 (c) (using fake data)
+cols <- rep(brewer.pal(8,'Blues'),20)
+coef.1 <- matrix(0, J, 1)
+coef.2 <- matrix(0, J, 1)
+coef.1 <- coef(M1f)$person[1]
+coef.2 <- coef(M1f)$person[2]
+t = time[fake.83.7$person==unique.pidf[1]]
+for (j in 1:J){
+  if(j==1){
+    plot(t , y=coef.1[j,1] + coef.2[j,1]*t, type="l", xlab="time (years)", ylab="sqrt (CD4%)", 
+         main="estimated trend lines - simulated data", xlim=c(0,2), ylim=c(0,8))
+  }
+  curve(coef.1[j,1] + coef.2[j,1]*x, col = cols[j], add=T)
+}
+
+for (j in 1:J){
+  if(j==1){
+    plot(time[fake.83.7$person==unique.pidf[j]], y[fake.83.7$person==unique.pidf[j]], xlab="time (years)", ylab="sqrt (CD4%)", 
+         main="simulated data", cex = .1, ylim=c(0,8))
+  }
+  points(time[fake.83.7$person==unique.pidf[j]], y[fake.83.7$person==unique.pidf[j]], type="l", col=cols[j], ylim=c(0,8))
+}
+
+CD4.power <- function (J, K, n.sims=1000){
+  signif <- rep (NA, n.sims)
+  for (s in 1:n.sims){
+    fake <- CD4.fake (J,K)
+    lme.power <- lmer (y ~ time + time:treatment1 + (1 + time | person),
+         data=fake)
+    theta.hat <- fixef(lme.power)["time:treatment1"]
+    theta.se <- se.fixef(lme.power)["time:treatment1"]
+    signif[s] <- (theta.hat - 2*theta.se) > 0    # return TRUE or FALSE
+  }
+  power <- mean (signif)                         # proportion of TRUE
+  return (power)
+}
+
+##  these really vary wildly from run to run if nsims is only 100
+CD4.power (J=150, K=7, n.sims=100)
+CD4.power (J=110, K=7, n.sims=100)  
+CD4.power (J=80, K=7, n.sims=100) 
+CD4.power (J=50, K=7, n.sims=100) 
+
+J.values <- c(15, 60, 100, 150, 200, 225, 250, 300, 400)
+n.sims.values <- rep(1000,9)
+K.values <- c(3,5,7,10)
+#power.values <- array (NA, c(length(J.values),length(K.values)))
+#  for (i1 in 1:length(J.values)){
+#  for (i2 in 1:length(K.values)){
+#    #cat ("computing power calculation for J =", J.values[i1], ", K =", K.values[i2], "\n")
+#    power.values[i1,i2] <- CD4.power (J=J.values[i1], K=K.values[i2], n.sims=n.sims.values[i1])
+#    #cat ("power =", power.values[i1,i2], "\n")
+#  }
+#}
+
+#save(power.values, J.values, n.sims.values, K.values, file = 'powervalues3.RData')
+load('powervalues3.RData')
+
+dfp = as.data.frame(cbind(seq(1:length(J.values)), J.values, power.values))
+colnames(dfp) = c("ID", "J.values", "K=3", "K=5","K=7", "K=10")
+dfpmelt = melt(dfp,id = c("ID", "J.values"))
+```
+
+### (b)
+
+```{r}
+p <- ggplot(dfpmelt, aes(x = J.values, y = value, color = variable)) +
+  geom_line(size=1) + ylim(0, 1) +
+  scale_color_manual(values = wes_palette("GrandBudapest2", n = 4)) +
+  theme_bw() + 
+  theme(axis.text=element_text(size=10), 
+        axis.title=element_text(size=10), 
+        legend.text=element_text(size=10)) +
+  geom_hline(yintercept = 0.80, linetype = 2) +
+  xlab("number of children") + ylab("power") + 
+  ggtitle("Effect of zinc is .5") + 
+  theme(legend.title = element_blank())
+p
+```
+
+# Problem 3
+
+```{r}
+load("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/BA-BS/2022/Spring 2022/STAT - 4400/Data/schooldata.Rdata")
+head(schooldata)
+```
+
+### (a)
+
+```{r}
+mod1 <- lm(extro ~ open + agree + social, data = schooldata)
+summary(mod1)
+display(mod1)
+```
+The model is unhelpful, we are unable to make any inference with certinty, and the response looks independent from the predictors for the most part.
+
+### (b)
+
+```{r}
+require(lme4)
+
+mod2 <- lmer (extro ~ open + agree + social + (open | school) + (agree | school) + (social | school), data = schooldata)
+summary(mod2)
+display(mod2)
+```
+With this model, the parameters are estimated as follows:
+
+ Unexplained within-school variation $\widehat{\sigma}_y$ = 2.66  \\
+ 
+ School-Open intercepts variation $\widehat{\sigma}_{\alpha}$ = 4.97  \\
+ School-agree intercepts variation $\widehat{\sigma}_{\alpha}$ = 4.97  \\
+ School-Social intercepts variation $\widehat{\sigma}_{\alpha}$ = 4.96  \\
+   
+ School-Open slopes variation $\widehat{\sigma}_{\beta}$ = 0.02   \\ 
+ School-agree slopes variation $\widehat{\sigma}_{\beta}$ = 0.00   \\ 
+ School-Social slopes variation $\widehat{\sigma}_{\beta}$ = 0.01   \\ 
+   
+ Correlation between intercepts and slopes (School-Open) $\widehat{\rho} $ = 1  \\
+ Correlation between intercepts and slopes (School-agree) $\widehat{\rho} $ = -1  \\
+ Correlation between intercepts and slopes (School-Social) $\widehat{\rho} $ = 1  \\
+   
+ Fixed effect, school mean intercept $\widehat{\mu}_{\alpha}$ = 59.12 \\
+ Fixed effect, School-Open mean slope & $\widehat{\mu}_{\beta}$ = 0.01 \\
+ Fixed effect, School-Open mean slope & $\widehat{\mu}_{\beta}$ = 0.03 \\
+ Fixed effect, School-Open mean slope & $\widehat{\mu}_{\beta}$ = 0.00 \\
+
+### (c)
+
+```{r}
+require(lme4)
+
+mod3 <- lmer (extro ~ open + agree + social + school:class + (1 + open | school) + (1 + open | school:class) + (1 + agree | school:class) + (1 + social | school:class), data = schooldata)
+summary(mod3)
+display(mod3)
+```
+This model would be helpful if we are trying to predict extroversion based on openness, agreeableness, and social ability within a school and per class.
+It should be helpful as it takes into account multiple predictors and effects, allowing for a more accurate model and improved certainty.
+### (d)
+
+```{r}
+library(sjPlot) #for plotting lmer and glmer mods
+library(gridExtra)
+
+plot1 = plot_model(mod2, show.values=FALSE, show.p=TRUE, title="Varying Intercept")
+plot2 = plot_model(mod3, show.values=FALSE, show.p=TRUE, title="varying slope & Intercept")
+
+grid.arrange(plot1, plot2, ncol = 2)
+```
+

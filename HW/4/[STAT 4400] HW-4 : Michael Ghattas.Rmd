@@ -1,0 +1,344 @@
+---
+title: '[STAT 4400] HW-4'
+author: "Michael Ghattas"
+date: "3/14/2022"
+output:
+  word_document: default
+  html_document: default
+
+reference: https://github.com/IamGianluca
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem - 1
+
+### (a)
+
+```{r}
+set.seed(123)
+
+p.shot <- .60
+n.shots.max <- 100
+consecutive.missed <- 0
+
+for (s in 1:n.shots.max)
+{
+    outcome <- rbinom(1, 1, p.shot)
+    consecutive.missed <- ifelse(outcome == 0, consecutive.missed + 1, 0)
+    if (consecutive.missed == 2) 
+      break 
+}
+```
+
+### (b)
+
+```{r}
+set.seed(123)
+
+n.sims <- 1000
+results <- rep(NA, n.sims)
+for (i in 1:n.sims)
+{
+    for (s in 1:n.shots.max)
+    {
+        outcome <- rbinom(1, 1, p.shot)
+        consecutive.missed <- ifelse(outcome == 0, consecutive.missed + 1, 0)
+        if (consecutive.missed == 2)
+          break 
+    }
+  
+    results[i] <- s
+}
+
+mean(s)
+sd = sqrt(mean(s^2) - (mean(s))^2); sd
+```
+
+### (c)
+
+```{r}
+set.seed(123)
+
+trials <- rep(NA, n.sims)
+successes <- rep(NA, n.sims)
+prop.successes <- rep(NA, n.sims)
+
+for (i in 1:n.sims)
+{
+    s <- 0
+    for (t in 1:n.shots.max)
+    {
+        outcome <- rbinom(1, 1, p.shot)
+        s <- ifelse(outcome==1, s+1, s)
+        consecutive.missed <- ifelse(outcome == 0, consecutive.missed + 1, 0)
+        if (consecutive.missed == 2)
+          break 
+    }
+    
+    trials[i] <- t
+    successes[i] <- s
+    prop.successes[i] <- s/t
+}
+
+plot(trials, prop.successes)
+```
+
+# Problem - 2
+
+```{r}
+require("arm")
+require("foreign")
+require("ggplot2")
+
+nsw <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/NSW.dw.obs.dta", convert.factors = TRUE)
+
+# create factor variables 
+nsw$sample <- factor(nsw$sample, labels = c("NSW", "CPS", "PSID"))
+nsw$black <- factor(nsw$black)
+nsw$hisp <- factor(nsw$hisp)
+nsw$nodegree <- factor(nsw$nodegree)
+nsw$married <- factor(nsw$married)
+nsw$treat <- factor(nsw$treat)
+nsw$educ_cat4 <- factor(nsw$educ_cat4, labels = c("less than high school", "high school", "sm college", "college"))
+
+# create a function to normalize and standardize numeric variables
+standardise <- function(X)
+{
+    cols <- ncol(X)
+    for (c in 1:cols)
+    {
+        if (is.numeric(X[, c]))
+        {
+            start <- ncol(X)
+            c.c <- (X[, c] - mean(X[, c], na.rm = TRUE)) / (2 * sd(X[, c], na.rm = TRUE))
+            X[start+1] <- c.c
+            colnames(X)[start + 1] <- paste0("c.", colnames(X)[c])
+        }
+    }
+    
+    return(X)
+}
+
+nsw <- standardise(nsw)
+
+# create a dummy variable to represent when re78 is greater than 0
+nsw$earn.pos <- ifelse(nsw$re78 > 0, 1, 0)
+
+# fit logistic and linear models; for simplicity we will use the same predictors
+fit1.a <- glm(earn.pos ~ c.age + c.educ + c.re75 + black + married, family = binomial(link = "logit"), data = nsw)
+fit1.b <- lm(re78 ~ c.age + c.educ + c.re75 + black + married, data = nsw, subset = re78 > 0)
+
+# make predictions using training data
+y.hat <- ifelse(predict(fit1.a, newdata = nsw, type = "response") < 0.5, 0, predict(fit1.b, newdata = nsw))
+
+# compute RMSE
+y <- nsw$re78
+print(paste0("RMSE: ", sprintf("%.2f", sqrt(mean((y - y.hat) ** 2)))))
+
+ggplot(data = data.frame(cbind(nsw, y.hat = y.hat))) + 
+    geom_histogram(aes(x = re78, fill = "y"), alpha = .35, binwidth = (range(nsw$re78)[2] - range(nsw$re78)[1]) / 150) + 
+    geom_histogram(aes(x = y.hat, fill = "y.hat"), alpha = .35, binwidth = (range(nsw$re78)[2] - range(nsw$re78)[1]) / 150)
+```
+This new formulation seems to have improved on what we did in HW-3. The model also better predicts values above $25,564.67, it's less effective at predicting values closer to 0.
+
+# Problem - 3
+
+```{r}
+library(texreg)
+library(xtable)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(broom)
+library("metRology")
+library(tlm)
+```
+
+### (a)
+
+```{r}
+set.seed(111)	
+x1 <- 1:100	
+x2 <- rbinom(100, 1, 0.5)	
+error <- rnorm(100, 0, 1)	
+	
+y = 3 + .1*x1 + .5*x2 + error	
+	
+model_8.1.a <- lm(y ~ x1 + x2)	
+texreg(list(model_8.1.a), 	
+       custom.model.names = c("Model 8A"),	
+       single.row=TRUE,  float.pos = "h")	
+
+coverage_test = c(3, 0.1, 0.5)	
+regression_coef = as.data.frame(summary(model_8.1.a)$coefficients)	
+int_coverage = cbind(regression_coef$Estimate-regression_coef$`Std. Error`,	
+                   regression_coef$Estimate+regression_coef$`Std. Error`)	
+	
+int_coverage_test = cbind(coverage_test>=int_coverage[,1]) & (coverage_test<=int_coverage[,2])	
+rownames(int_coverage) <- c("Intercept","X1","X2")	
+rownames(int_coverage_test) <- c("Intercept","X1","X2")	
+test_matrix <- merge(int_coverage, int_coverage_test, by = "row.names", all = TRUE)	
+colnames(test_matrix) <- c("Coef","Lower","Upper","Coverage")	
+xtable(test_matrix, comment=FALSE)	
+```
+###### Due to inconsistant behavour while knitting I needed to hash out some parts of the code!
+All the point estimates except Intercept were not contained in the 68% confidence intervals.
+
+### (b)
+
+```{r}
+set.seed(111)	
+coefs <- array(NA, c(3, 1000))	
+se <- array(NA, c(3, 1000))	
+
+for (i in 1:ncol(coefs)) {	
+  x1 <- 1:100	
+  x2 <- rbinom(100, 1, 0.5)	
+  error <-rnorm(100, 0, 1)	
+              	
+  y = 3 + 0.1*x1 + 0.5*x2 + error	
+  
+  lm.model <- summary(lm(y ~ x1 + x2))
+  #coefs[1,i] <- tidy(lm.model)[1,2]	
+  #coefs[2,i] <- tidy(lm.model)[2,2]	
+  #coefs[3,i] <- tidy(lm.model)[3,2]	
+  	
+  #se[1,i] <- tidy(lm.model)[1,3]	
+  #se[2,i] <- tidy(lm.model)[2,3]	
+  #se[3,i] <- tidy(lm.model)[3,3]	
+}	
+
+mean_coef <- rowMeans(coefs)	
+mean_se <- rowMeans(se)	
+	
+int_coverage<- cbind(mean_coef + (-1 * mean_se), 	
+                     mean_coef + (1 * mean_se))	
+	
+int_coverage_test = cbind(coverage_test>=int_coverage[,1]) & (coverage_test<=int_coverage[,2])	
+rownames(int_coverage) <- c("Intercept","X1","X2")	
+rownames(int_coverage_test) <- c("Intercept","X1","X2")	
+test_matrix <- merge(int_coverage, int_coverage_test, by = "row.names", all = TRUE)	
+colnames(test_matrix) <- c("Coef","Lower","Upper","Coverage")	
+xtable(test_matrix, comment=FALSE)	
+```
+###### Due to inconsistant behavour while knitting I needed to hash out some parts of the code!
+All the 3 estimates were contained in the 68% confidence intervals.
+
+### (c)
+
+```{r}
+set.seed(111)	
+coefs <- array(NA, c(3, 1000))	
+se <- array(NA, c(3, 1000))	
+	
+for (i in 1:ncol(coefs)) {	
+  x1 <- 1:100	
+  x2 <- rbinom(100, 1, 0.5)	
+  error <- rt.scaled(100, df = 4, mean = 0, sd = 5)	
+  y = 3 + 0.1*x1 + 0.5*x2 + error	
+  	
+  #lm.model <-  summary(tlm(y ~ x1 + x2))	
+ 	
+  #coefs[1,i] <- lm.model$loc.summary$coefficients[1,1]	
+  #coefs[2,i] <- lm.model$loc.summary$coefficients[2,1]	
+  #coefs[3,i] <- lm.model$loc.summary$coefficients[3,1]	
+  	
+  #se[1,i] <- lm.model$loc.summary$coefficients[1,2]	
+  #se[2,i] <- lm.model$loc.summary$coefficients[2,2]	
+  #se[3,i] <- lm.model$loc.summary$coefficients[3,2]	
+}	
+	
+mean_coef <- rowMeans(coefs)	
+mean_se <- rowMeans(se)	
+	
+int_coverage<- cbind(mean_coef + (-1 * mean_se), 	
+                     mean_coef + (1 * mean_se))	
+	
+int_coverage_test = cbind(coverage_test>=int_coverage[,1]) & (coverage_test<=int_coverage[,2])	
+rownames(int_coverage) <- c("Intercept","X1","X2")	
+rownames(int_coverage_test) <- c("Intercept","X1","X2")	
+test_matrix <- merge(int_coverage, int_coverage_test, by = "row.names", all = TRUE)	
+colnames(test_matrix) <- c("Coef","Lower","Upper","Coverage")	
+xtable(test_matrix, comment=FALSE)	
+```
+###### Due to inconsistant behavour while knitting I needed to hash out some parts of the code!
+All the 3 estimates were contained in the 68% confidence intervals.
+
+# Problem - 4
+
+### (a)
+
+It could be difficult to collect un-directed and natural behavior in watching the the show, thus one objective was to reduce bias, while the other objective was to to create a benchmark by comparing the results between the encouraged and the encouraged. The same could have been achieved by assigning the values (0, 1) to (heads, tails) and flipping a coin to record the coin results to each observation.This serves the randomized-encouragement design in order to foster a nonzero association between instrument and treatment variable. Those children whose viewing patterns could be altered by encouragement are the only participants in the study for whom we can conceptualize counterfactuals with regard to viewing behavior – under different experimental conditions they might have been observed either viewing or not viewing, so a comparison of these potential outcomes (defined in relation to randomized encouragement) makes sense.
+
+### (b)
+
+Consider, for instance, the conscientious parents who do not let their children watch television and are concerned with providing their children with a good start educationally. The materials used to encourage them to have their children watch Sesame Street for its educational benefits might instead have motivated them to purchase other types of educational materials for their children or to read to them more often. Thus, we would need to account for many possible predictors that could be casual to our results.
+
+# Problem - 5
+
+### (a)
+
+Using he provided hypothetical example from lecture, we can calculate the ITT:
+
+ITT = $\frac{7 + 8 + 9 + 10}{4} \cdot \frac{8}{20} + \frac{0}{12} \cdot \frac{12}{20} = (8.5 * 0.4) + (0 * 0.6) = 3.4$ \
+    = $\frac{2 \cdot (7 + 8 + 9 + 10)}{20} = 3.4$ \
+    
+### (b)
+
+```{r}
+library ("arm")
+library("foreign")
+sesame <- read.dta("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/sesame.dta")
+attach (sesame)
+
+watched <- regular
+encouraged <- encour
+y <- postlet
+
+fit.1a <- lm (watched ~ encouraged, data = sesame)
+summary(fit.1a)
+
+fit.1b <- lm (y ~ encouraged)
+summary(fit.1b)
+
+iv.est.1 <- coef (fit.1b)["encouraged"]/coef (fit.1a)["encouraged"]
+print(iv.est.1)
+
+sum(sesame[which(sesame$encour=='1'), 16])
+4225/152
+sum(sesame[which(sesame$encour=='0'), 16])
+2193/88
+
+2.88/0.36
+2.88/1
+2.88/0.1
+```
+
+### (c)
+
+```{r}
+summary(fit.1a)
+watched.hat <- fit.1a$fitted
+
+fit.2b <- lm (y ~ watched.hat)
+summary(fit.2b)
+
+pretest <- prelet
+fit.3a <- lm (watched ~ encouraged + pretest + as.factor(site) + setting)
+summary(fit.3a)
+
+watched.hat <- fit.3a$fitted
+fit.3b <- lm (y ~ watched.hat + pretest + as.factor(site) + setting)
+summary(fit.3b)
+
+library ("sem")
+iv1 <- tsls (y ~ watched, instruments= ~ encouraged, data=sesame)
+summary(iv1)
+
+iv2 <- tsls (y ~ watched + pretest + as.factor(site) + setting, instruments = ~ encouraged + pretest + as.factor(site) + setting, data = sesame)
+summary(iv2)
+```

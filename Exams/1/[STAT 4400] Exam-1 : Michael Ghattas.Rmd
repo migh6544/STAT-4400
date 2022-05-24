@@ -1,0 +1,238 @@
+---
+title: '[STAT 4400] Exam-1'
+author: "Michael Ghattas"
+date: "2/22/2022"
+output:
+  
+  word_document: default
+  html_document: default
+Refrences: https://cran.r-project.org/web/packages/mlogit/vignettes/e1mlogit.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1:
+
+
+
+### (1)
+
+True
+
+### (2)
+
+False
+
+### (3)
+
+True
+
+### (4)
+
+True
+
+### (5)
+
+False
+
+### (6)
+
+True
+
+### (7)
+
+True
+
+### (8)
+
+True
+
+### (9)
+
+True
+
+### (10)
+
+False
+
+### (11)
+
+True
+
+### (12)
+
+False
+
+### (13)
+
+False
+
+### (14)
+
+True
+
+### (15)
+
+False
+
+### (16)
+
+True
+
+### (17)
+
+True (IF by reflects we mean cause! As discussed with Bhawneet.)
+
+### (18)
+
+True
+
+### (19)
+
+False
+
+### (20)
+
+False (Correlated Explanatory Variables: If there are very many variables, it is likely that they will be highly correlated, meaning that some variables or sets of variables are measuring similar things. As discussed with Bhawneet.)
+
+
+
+
+# Part 2:
+
+
+
+### Problem - 1
+```{r}
+library(ggplot2)
+head(msleep)
+```
+##### (1)
+
+```{r}
+df <- na.omit(msleep)
+lmod = lm(sleep_total ~ brainwt, data = df)
+
+ggplot(df, aes(brainwt, sleep_total, color = name)) +
+  geom_point() + 
+  geom_smooth(method = lm, color = "red") +
+  theme_bw() + xlab("Average Brain Weight in KG") +   ylab("Total Amount of Sleep in Hrs") + 
+  ggtitle("Sleep Times vs. Average Brain Weights")
+```
+##### (2)
+
+```{r}
+lmod = lm(sleep_total ~ awake + + bodywt + awake:bodywt + sleep_cycle, data = df)
+summary(lmod)
+plot(lmod)
+```
+
+##### (3)
+
+```{r}
+df$sleep_ratio <- (df$sleep_total / 24)
+lmod = lm(sleep_total ~ sleep_ratio, data = df)
+coef(lmod)
+logitSR = (1 / (1 + exp(-1 * (-7.944109e-15 + (2.400e+01 * df$sleep_ratio))))); logitSR
+
+lmod = lm(logitSR ~ log(brainwt), data = df)
+summary(lmod)
+```
+Interpreting the results of our coefficients, we can see a negative correlation between the brain weight of the animal and the amount of sleep. For every additional KG of weight, there is a decrease of approximately 0.3% of sleep time needed per 24 hours.
+
+```{r}
+df$sleep_ratio <- (df$sleep_ratio * 24)
+lmod = lm(sleep_total ~ sleep_ratio, data = df)
+coef(lmod)
+logitSR = (1 / (1 + exp(-1 * (3.177644e-15 + (1.000000e+00 * df$sleep_ratio))))); logitSR
+
+lmod = lm(logitSR ~ log(brainwt), data = df)
+summary(lmod)
+```
+We can see that returning from 24 hors to hours do not change our results and mantain the sleep time between 0 and 24, though never reaching 0 or 24.
+
+##### (4)
+
+```{r}
+ggplot(df, aes(log(df$brainwt), df$sleep_ratio)) +
+  geom_point() + 
+  geom_smooth(method = lm, color = "red") +
+  theme_bw() + xlab("Brain Weight in e^(KG)") +   ylab("Total Sleep in Hrs") + 
+  ggtitle("Sleep Time per Day vs. Log(Brain Weight)")
+```
+
+
+
+### Problem - 2
+
+```{r}
+homeheat = read.csv('/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/homeheat.csv')
+head(homeheat)
+```
+
+##### (1)
+
+```{r}
+library("mlogit")
+H <- dfidx(homeheat, choice = "depvar", varying = c(3:12))
+m <- mlogit(depvar ~ ic + oc | 0, H)
+summary(m)
+```
+Yes, the t-statistics are greater than 1.96, which is the critical level for 95% confidence level.
+
+##### (2)
+
+```{r}
+coef(m)["oc"]/coef(m)["ic"]
+```
+The model implies that the decision-maker is willing to pay 73 cents in higher installation cost in order to reduce annual operating costs by $1.
+
+##### (3)
+
+```{r}
+mc <- mlogit(depvar ~ ic + oc, H, reflevel = 'hp')
+summary(mc)
+
+apply(fitted(mc, outcome = FALSE), 2, mean)
+```
+Exact match: alternative-specific constants in a logit model insure that the average probabilities equal the observed shares.
+
+##### (4)
+
+```{r}
+wtp <- coef(mc)["oc"] / coef(mc)["ic"]
+wtp
+
+r <- 1 / wtp
+r
+```
+The willingness to pay is USD(4.56) for a $1 year stream of savings. The decision-maker applies a 22% discount rate, thus the results are certainly more reasonable than in the previous model.
+
+##### (5)
+
+```{r}
+Hn <- H
+Hn[idx(Hn, 2) == "hp", "ic"] <- 0.88 * Hn[idx(Hn, 2) == "hp", "ic"]
+apply(predict(mc, newdata = Hn), 2, mean)
+```
+The share is predicted to rise to about 6.64% when rebates are given.
+
+##### (6)
+
+```{r}
+plot1 = ggplot(homeheat, aes(ic.gc + ic.gr + ic.ec + ic.er + ic.hp, oc.gc  + oc.gr  + oc.ec  + oc.er + oc.hp, color = idcase)) +
+  geom_point() + 
+  geom_smooth(method = lm, color = "red") +
+  theme_bw() + xlab("Installation Cost") +   ylab("Annual Operating Cost") + 
+  ggtitle("Installation vs. Operational Cost")
+
+plot2 = ggplot(homeheat, aes(agehed, income)) +
+  geom_point(shape = 21, color = "darkgoldenrod4", fill = "darkgoldenrod3", size = 5) + 
+  theme_light() + xlab("Age") +   ylab("Income Class") + 
+  ggtitle("House-Head Age vs. Income Class")
+
+library(gridExtra)
+grid.arrange(plot1, plot2, ncol = 2)
+```

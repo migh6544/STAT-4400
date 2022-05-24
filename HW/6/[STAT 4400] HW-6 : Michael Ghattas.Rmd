@@ -1,0 +1,364 @@
+---
+title: '[STAT 4400] HW-6'
+author: "Michael Ghattas"
+date: "4/6/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(
+ggplot2,
+knitr,
+arm,
+data.table,
+foreign,
+gridExtra,
+car,
+stringr,
+rstan,
+rstanarm,
+zoo
+)
+```
+
+# Problem 1
+
+```{r}
+library(lme4)
+library(lmerTest)
+library(extraoperators)
+library(JWileymisc)
+library(multilevelTools)
+
+
+df <- read.csv(file = "/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/ProfEvaltnsBeautyPublic.csv")
+head(df)
+
+courses <- data.frame(df[,19:48])
+n <- nrow (df)
+J <- ncol (courses) + 1
+course.id <- rep (0, n)
+for (i in 1:n){
+  for (j in 1:30){
+    if (courses[i,j]==1) course.id[i] <- j
+  }
+}
+
+head(df)
+```
+
+### (a)
+
+$y_{i} \sim N(\alpha_{j[i]} + \beta_{j[i]} x_{i}, \sigma_{y}^2)$, for $i = 1, ... , n$
+
+### (b)
+
+```{r}
+M1 <- lmer (courseevaluation ~ profevaluation + (1 + profevaluation | course.id) + students + (1 + students | course.id) + tenuretrack + (1 + tenuretrack | course.id) + tenured + (1 + tenured | course.id) + percentevaluating + (1 + percentevaluating | course.id), data = df)
+summary(M1)
+```
+
+### (c)
+
+```{r}
+plot(M1)
+```
+
+# Problem 2
+
+### (a)
+
+```{r}
+I <- 100L
+J <- 10L
+W <- 3L
+tau <- 2
+sigma <- 1
+
+assignment <- matrix(0L,I,J)
+for (i in 1L:I) {
+  workload <- colSums(assignment)
+  available <- which (workload < W*I/J)
+  if (i > 75L)
+    cat("Round ",i,": available = ",
+        paste(available,collapse=", "),"\n")
+  while (length(available) < W) {
+    slacker <- which.min(workload)
+    pswaps <- which(!assignment[1L:(i-1L),slacker])
+    swaprow <- sample(pswaps,1L)
+    swapcol <- sample(which(as.logical(assignment[swaprow,])),1L)
+    assignment[swaprow,swapcol] <- 0L
+    assignment[swaprow,slacker] <- 1L
+    workload <- colSums(assignment)
+    available <- which(workload < W*I/J)
+    cat("Round ",i,"x: availble=",paste(available,collapse=", "),
+        "\n")
+  } 
+  assignment[i,sample(available,W)] <- 1L
+}
+colSums(assignment)
+rowSums(assignment)
+write.csv(assignment,"assignment.csv")
+
+ability <- runif(I,1,10)
+severity <- rnorm(J,0,tau)
+applicant <- rep(1L:I,each=W)
+rater <- 
+  sapply(1L:I,
+              function (i) 
+                which(as.logical(assignment[i,])))
+str(rater)
+rating <- ability[applicant] + severity[rater] + rnorm(I*W,0,sigma)
+rating <- pmax(1,pmin(rating,10))
+ratings.df <- data.frame(applicant=applicant, rater=as.vector(rater), rating=rating)
+ratings.df
+write.csv(ratings.df,"ratings.csv")
+
+library(lattice)
+ratings.df1 <- data.frame(ratings.df, ability=ability[applicant], severity=severity[rater])
+
+xyplot(rating~ability,data=ratings.df1)
+xyplot(rating~ability|rater,data=ratings.df1)
+boxplot(rating~rater,data=ratings.df1)
+
+library(arm)
+fit <- lmer(rating ~ (1|applicant) + (1|rater), data=ratings.df)
+
+display(fit)
+sqrt(9^2/12)
+
+plot(ability,coef(fit)$applicant[,1])
+plot(severity,ranef(fit)$rater[,1])
+plot(fit)
+boxplot(resid(fit)~as.vector(rater))
+```
+
+### (b)
+
+```{r}
+alpha <- 2
+scale <- .5
+curve(dgamma(x,alpha,scale=scale),xlim=c(0,5))
+
+sigma2 <- rgamma(J,alpha,scale=scale)
+rating2 <- ability[applicant] + severity[rater] + rnorm(I*W,0,sigma2[rater])
+rating2 <- pmax(1,pmin(rating2,10))
+ratings2.df <- data.frame(applicant=applicant, rater=as.vector(rater), rating=rating2, severity=severity[rater], ability=ability[applicant], sigma2=sigma2[rater])
+ratings2.df
+
+xyplot(rating~ability,data=ratings2.df)
+xyplot(rating~ability|rater,data=ratings2.df)
+boxplot(rating~rater,data=ratings2.df)
+
+fit2 <- lmer(rating ~ (1|applicant) + (1|rater), data=ratings2.df)
+display(fit2)
+
+plot(ability,coef(fit2)$applicant[,1])
+plot(severity,ranef(fit2)$rater[,1])
+plot(fit2)
+boxplot(resid(fit2)~as.vector(rater))
+```
+
+# Problem 3
+
+```{r}
+library(reshape)
+
+filename<- "http://www.stat.columbia.edu/~gelman/arm/examples/olympics/olympics1932.txt"
+olympics1932_na<-read.fwf(filename,widths=c(2,14,9,9,9,9,9,9,9),skip=21,header = FALSE)
+colnames(olympics1932_na)<- c("pair", "criterion", "judge_1",  "judge_2",  "judge_3",
+                              "judge_4",  "judge_5" , "judge_6",  "judge_7")
+olympics1932<-na.locf(olympics1932_na)
+olympics1932$criterion<-str_trim(olympics1932_na$criterion)
+
+arr_olym<-melt(data = olympics1932,id.vars=c("pair","criterion"),
+               measure.vars=c(colnames(olympics1932)[3:9]))
+
+olym_984 <- rename(arr_olym, c("pair"="skater_ID", "variable"="judge_ID"))
+olym_984 <- olym_984[order(olym_984$judge_ID),]
+olym_984 <- olym_984[c("criterion", "value", "skater_ID", "judge_ID")]
+
+olym_984$SameCountry <-ifelse(olym_984[,3] == " 1"&olym_984[,4] == "judge_5",1,
+  ifelse(olym_984[,3] == " 2"&olym_984[,4] == "judge_7",1,
+  ifelse(olym_984[,3] == " 3"&olym_984[,4] == "judge_1",1,
+  ifelse(olym_984[,3] == " 4"&olym_984[,4] == "judge_1",1,
+  ifelse(olym_984[,3] == " 7"&olym_984[,4] == "judge_7",1,0
+  )))))
+
+olym_984
+```
+
+### (a)
+
+```{r}
+library(dplyr)
+
+data_tech <- olym_984 %>% filter(criterion == "Program")
+data_art <- olym_984 %>% filter(criterion == "Performance")
+reg_tech <- lmer(value ~ 1 + (1 | skater_ID) + (1 | judge_ID), data = data_tech)
+summary(reg_tech)
+```
+
+### (b)
+
+```{r}
+reg_art <- lmer(value ~ 1 + (1|skater_ID) + (1|judge_ID),data=data_art)
+summary(reg_tech)
+```
+
+
+### (c)
+
+```{r}
+ggplot(data_tech,aes(x=skater_ID,y=value,color=judge_ID))+geom_point()+
+  ggtitle("Technical scores")
+ggplot(data_tech,aes(x=skater_ID,y=value,color=judge_ID))+geom_point()+
+  ggtitle("Artristic scores")
+
+inter_skate <- as.data.frame(cbind(unlist(ranef(reg_tech))[1:7],unlist(ranef(reg_art))[1:7]))
+inter_skate$skater_ID <-c(1:7) 
+ggplot(data=inter_skate)+
+  geom_point(col="red",aes(x=skater_ID,y=V1))+geom_smooth(col="red",aes(x=skater_ID,y=V1),se=FALSE)+
+  geom_point(col="black",aes(x=skater_ID,y=V2))+geom_smooth(col="black",aes(x=skater_ID,y=V2),se=FALSE)+
+  ggtitle("Intercepts for two models for each skater_ID")+
+  ylab("Intercept")
+  
+
+inter_judge <- as.data.frame(cbind(unlist(ranef(reg_tech))[1:7],unlist(ranef(reg_art))[1:7]))
+inter_judge$judge_ID <-c(1:7) 
+ggplot(data=inter_judge)+
+  geom_point(col="red",aes(x=judge_ID,y=V1))+geom_smooth(col="red",aes(x=judge_ID,y=V1),se=FALSE)+
+  geom_point(col="black",aes(x=judge_ID,y=V2))+geom_smooth(col="black",aes(x=judge_ID,y=V2),se=FALSE)+
+  ggtitle("Intercepts for two models for each judge_ID")+
+  ylab("Intercept")
+```
+
+### (d)
+
+Please see graphs above.
+
+# Problem 4
+
+```{r}
+library(ggplot2)
+library(bayesplot)
+library(rstanarm)
+theme_set(bayesplot::theme_default())
+
+data(wells)
+wells$dist100 <- wells$dist / 100
+
+ggplot(wells, aes(x = dist100, y = ..density.., fill = switch == 1)) +
+  geom_histogram() +
+  scale_fill_manual(values = c("gray30", "skyblue"))
+```
+
+
+### (a)
+
+```{r}
+t_prior <- student_t(df = 7, location = 0, scale = 2.5)
+fit1 <- stan_glm(switch ~ dist100, data = wells,
+                 family = binomial(link = "logit"),
+                 prior = t_prior, prior_intercept = t_prior,
+                 cores = 2, seed = 12345)
+```
+
+### (b)
+
+```{r}
+round(posterior_interval(fit1, prob = 0.5), 2)
+```
+
+### (c)
+
+```{r}
+# Predicted probability as a function of x
+pr_switch <- function(x, ests) plogis(ests[1] + ests[2] * x)
+# A function to slightly jitter the binary data
+jitt <- function(...) {
+  geom_point(aes_string(...), position = position_jitter(height = 0.05, width = 0.1),
+             size = 2, shape = 21, stroke = 0.2)
+}
+ggplot(wells, aes(x = dist100, y = switch, color = switch)) +
+  scale_y_continuous(breaks = c(0, 0.5, 1)) +
+  jitt(x="dist100") +
+  stat_function(fun = pr_switch, args = list(ests = coef(fit1)),
+                size = 2, color = "gray35")
+```
+
+# Problem 5
+
+```{r}
+df <- read.table("/Users/Home/Documents/Michael_Ghattas/School/CU_Boulder/2022/Spring 2022/STAT - 4400/Data/rodents.dat")
+df$race <- factor(df$race, labels=c("White (non-hispanic)", "Black (non-hispanic)", "Puerto Rican", "Other Hispanic", "Asian/Pacific Islander", "Amer-Indian/Native Alaskan", "Two or more races"))
+df$unitflr2 <- as.factor(df$unitflr2)
+df$numunits <- as.factor(df$numunits)
+df$stories <- as.factor(df$stories)
+df$extwin4_2 <- as.factor(df$extwin4_2)
+df$extflr5_2 <- as.factor(df$extflr5_2)
+df$borough <- factor(df$borough, labels=c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"))
+df$cd <- as.factor(df$cd)
+df$intcrack2 <- as.factor(df$intcrack2)
+df$inthole2 <- as.factor(df$inthole2)
+df$intleak2 <- as.factor(df$intleak2)
+df$intpeel_cat <- as.factor(df$intpeel_cat)
+df$help <- as.factor(df$help)
+df$old <- as.factor(df$old)
+df$dilap <- as.factor(df$dilap)
+df$regext <- as.factor(df$regext)
+df$poverty <- as.factor(df$poverty)
+df$povertyx2 <- as.factor(df$povertyx2)
+df$housing <- factor(df$housing, labels=c("public", "rent controlled/stabilized", "owned", "other rentals"))
+df$board2 <- as.factor(df$board2)
+df$subsidy <- as.factor(df$subsidy)
+df$under6 <- as.factor(df$under6)
+# Missing values
+missingNA <- sapply(df, function(x) sum(is.na(x)))
+df <- na.omit(df)
+```
+
+
+### (a)
+
+```{r}
+model.14.3A <- glmer(rodent2 ~ 1+race+personrm +intcrack2 + inthole2 + intleak2 +
+                            struct +regext+extflr5_2 +
+                           # old+dilap+intpeel_cat+extwin4_2+housing +
+                            (1|bldg),
+                            data=df,
+                            family=binomial(link="logit"),
+                            control=glmerControl(
+                                                  optimizer="bobyqa",
+                                                 optCtrl=list(maxfun=200000)) 
+                            )
+summary(model.14.3A)
+```
+
+### (b)
+
+```{r}
+model.14.3B <- glmer(rodent2 ~ 1+race+personrm +intcrack2 + inthole2 + intleak2 +
+                            struct +regext+extflr5_2 +
+                           # old+dilap+intpeel_cat+extwin4_2+housing +
+                            (1|bldg)+
+                            (1|cd),
+                            data=df,
+                            family=binomial(link="logit"),
+                            # increase convergence iterations
+                            control=glmerControl(
+                                                  optimizer="bobyqa",
+                                                 optCtrl=list(maxfun=200000)) 
+                            )
+summary(model.14.3B)
+```
+
+### (c)
+
+```{r}
+anova_logit.14 <- anova(model.14.3B,model.14.3A); anova_logit.14
+```
+
